@@ -1,0 +1,9 @@
+{% extends 'store/base.html' %}
+{% block content %}
+  <h2>Confirmar compra</h2>
+  <form method="post">
+    {% csrf_token %}
+    <p>Confirma que deseas crear la orden y pagar en caja.</p>
+    <button class="btn btn-success">Confirmar</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'store/base.html' %}
+{% block content %}
+  <h2>Carrito</h2>
+  {% if items %}
+    <table class="table">
+      <thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
+      <tbody>
+        {% for it in items %}
+          <tr>
+            <td>{{ it.product.name }}</td>
+            <td>{{ it.qty }}</td>
+            <td>${{ it.subtotal }}</td>
+            <td><a href="{% url 'remove_from_cart' it.product.id %}" class="btn btn-danger btn-sm">Quitar</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p><strong>Total: ${{ total }}</strong></p>
+    <a class="btn btn-primary" href="{% url 'checkout' %}">Pagar</a>
+  {% else %}
+    <p>Tu carrito está vacío.</p>
+  {% endif %}
+{% endblock %}

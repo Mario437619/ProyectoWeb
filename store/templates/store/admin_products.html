@@ -1,0 +1,22 @@
+{% extends 'store/base.html' %}
+{% block content %}
+  <h2>Productos (Admin)</h2>
+  <a class="btn btn-success mb-2" href="{% url 'admin_product_create' %}">Crear producto</a>
+  <table class="table">
+    <thead><tr><th>ID</th><th>Nombre</th><th>Stock</th><th>Precio</th><th></th></tr></thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.stock }}</td>
+        <td>${{ p.price }}</td>
+        <td>
+          <a class="btn btn-sm btn-primary" href="{% url 'admin_product_edit' p.id %}">Editar</a>
+          <a class="btn btn-sm btn-danger" href="{% url 'admin_product_delete' p.id %}">Eliminar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'store/base.html' %}
+{% block content %}
+  <h2>Reportes</h2>
+  <h4>Ventas del día</h4>
+  <p>Total hoy: ${{ total_today }}</p>
+  <ul>
+    {% for o in orders_today %}
+      <li>{{ o.order_number }} - ${{ o.total }}</li>
+    {% endfor %}
+  </ul>
+  <h4>Productos vendidos</h4>
+  <ul>
+    {% for s in sold %}
+      <li>{{ s.product__name }} — {{ s.total_qty }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

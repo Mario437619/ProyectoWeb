@@ -1,0 +1,11 @@
+<h1>Productos de {{ category.name }}</h1>
+
+<ul>
+    {% for p in products %}
+        <li>
+            <a href="{% url 'product_detail' p.id %}">
+                {{ p.name }} - ${{ p.price }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>
