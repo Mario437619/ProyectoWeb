@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-wo&0ze28gs+8obhv&@*x71vn89dw&+=u!4kqpp*yz48&1@%kmj'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -77,11 +77,11 @@ WSGI_APPLICATION = 'miweb.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cafeito',
-        'USER': 'root',      # o tu usuario de MySQL
-        'PASSWORD': '12345', # tu contraseña REAL de MySQL
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': 'bnzaxyq2eao6rthlniiy',     # Nombre de la base de datos en Clever Cloud
+        'USER': 'usub1qzn0ufsgatq',           # Usuario que Clever Cloud te dio
+        'PASSWORD': 'ogFM7JSno939qlLofD27',    # Contraseña que Clever Cloud te dio
+        'HOST': 'ogFM7JSno939qlLofD27',  # Host que te dio Clever Cloud
+        'PORT': '3306',                 # Puerto (normalmente 3306)
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
@@ -127,5 +127,5 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
-ALLOWED_HOSTS = ['<tu-nombre-de-servicio>.onrender.com']
+ALLOWED_HOSTS = ['proyectoweb-57bo.onrender.com']
 
