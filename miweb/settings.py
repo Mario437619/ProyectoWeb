@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 
+import dj_database_url
+import os
+
+DATABASES = {
+    'default': dj_database_url.parse(os.environ.get('mysql://usub1qzn0ufsgatq:ogFM7JSno939qlLofD27@bnzaxyq2eao6rthlniiy-mysql.services.clever-cloud.com:3306/bnzaxyq2eao6rthlniiy'))
+}
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -69,27 +75,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'miweb.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bnzaxyq2eao6rthlniiy',     # Nombre de la base de datos en Clever Cloud
-        'USER': 'usub1qzn0ufsgatq',           # Usuario que Clever Cloud te dio
-        'PASSWORD': 'ogFM7JSno939qlLofD27',    # Contraseña que Clever Cloud te dio
-        'HOST': 'ogFM7JSno939qlLofD27',  # Host que te dio Clever Cloud
-        'PORT': '3306',                 # Puerto (normalmente 3306)
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
-}
-
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
