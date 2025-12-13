@@ -12,12 +12,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 
-import dj_database_url
-import os
-
-DATABASES = {
-    'default': dj_database_url.parse(os.environ.get('mysql://usub1qzn0ufsgatq:ogFM7JSno939qlLofD27@bnzaxyq2eao6rthlniiy-mysql.services.clever-cloud.com:3306/bnzaxyq2eao6rthlniiy'))
-}
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-wo&0ze28gs+8obhv&@*x71vn89dw&+=u!4kqpp*yz48&1@%kmj'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -44,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'store',
-
 ]
 
 MIDDLEWARE = [
@@ -75,6 +68,27 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'miweb.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'cafeito',
+        'USER': 'root',      # o tu usuario de MySQL
+        'PASSWORD': '12345', # tu contraseña REAL de MySQL
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -111,6 +125,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
-ALLOWED_HOSTS = ['proyectoweb-57bo.onrender.com']
-

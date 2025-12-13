@@ -96,50 +96,26 @@ def checkout(request):
             p = Product.objects.get(id=int(pid))
             total += float(p.price) * int(qty)
 
-        # Aquí puedes tomar datos del formulario o de request.user si quieres
-        customer_name = request.POST.get('name', '')
-        customer_email = request.POST.get('email', '')
-        customer_phone = request.POST.get('phone', '')
+        now = timezone.now()
+        order = Order.objects.create(order_number=order_number, customer=request.user, total=total,
+                                     status='pending', payment_method='cash', payment_status='pending',
+                                     created_at=now, updated_at=now)
 
-        # Crear la orden sin customer ni created_at/updated_at
-        order = Order.objects.create(
-            order_number=order_number,
-            customer_name=customer_name,
-            customer_email=customer_email,
-            customer_phone=customer_phone,
-            total=total,
-            status='pending',
-            payment_method='cash',
-            payment_status='pending',
-            notes=''
-        )
-
-        # Crear items del pedido
         for pid, qty in cart.items():
             p = Product.objects.get(id=int(pid))
             qty_int = int(qty)
             subtotal = float(p.price) * qty_int
-            OrderItem.objects.create(
-                order=order,
-                product=p,
-                quantity=qty_int,
-                unit_price=p.price,
-                subtotal=subtotal
-            )
-            p.stock -= qty_int
+            OrderItem.objects.create(order=order, product=p, quantity=qty_int,
+                                     unit_price=p.price, subtotal=subtotal, created_at=now)
+            p.stock = p.stock - qty_int
             p.save()
-            InventoryLog.objects.create(
-                product=p,
-                quantity_change=-qty_int,
-                reason='Venta'
-            )
+            InventoryLog.objects.create(product=p, quantity_change=-qty_int, reason='Venta', created_at=now)
 
         request.session['cart'] = {}
         messages.success(request, f'Orden {order_number} creada correctamente')
         return redirect('home')
 
     return render(request, 'store/checkout.html')
-
 
 @user_passes_test(is_admin)
 def admin_products(request):

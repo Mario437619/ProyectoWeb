@@ -1,5 +1,4 @@
 from django.db import models
-from django.db import models
 from django.contrib.auth.models import User
 
 class Category(models.Model):
@@ -36,17 +35,17 @@ class Product(models.Model):
 
 class Order(models.Model):
     order_number = models.CharField(max_length=50, unique=True)
-    customer_name = models.CharField(max_length=100, blank=True, null=True)
-    customer_email = models.CharField(max_length=255, blank=True, null=True)
-    customer_phone = models.CharField(max_length=20, blank=True, null=True)
+    customer = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    customer_name = models.CharField(max_length=100, null=True, blank=True)
+    customer_email = models.CharField(max_length=255, null=True, blank=True)
+    customer_phone = models.CharField(max_length=20, null=True, blank=True)
     total = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, default='pending')
-    payment_method = models.CharField(max_length=20, default='cash')
-    payment_status = models.CharField(max_length=20, default='pending')
-    notes = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)  # se llena al crear
-    updated_at = models.DateTimeField(auto_now=True)      # se actualiza al guardar
-
+    status = models.CharField(max_length=20)
+    payment_method = models.CharField(max_length=20)
+    payment_status = models.CharField(max_length=20)
+    notes = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
 
     class Meta:
         db_table = 'orders'
@@ -73,4 +72,3 @@ class InventoryLog(models.Model):
 
     class Meta:
         db_table = 'inventory_logs'
-# Create your models here.
