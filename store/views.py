@@ -142,7 +142,7 @@ def quick_sale(request, product_id):
             total=total,
             status='completed',
             payment_method='cash',
-            payment_status='paid',
+            payment_status='completed',
             created_at=now,
             updated_at=now
         )

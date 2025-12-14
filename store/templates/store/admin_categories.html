@@ -1,0 +1,106 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .categories-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        color: white;
+    }
+
+    .categories-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+</style>
+
+<div class="categories-header">
+    <div>
+        <h1 style="font-weight: bold; color: var(--dark-bg); margin-bottom: 0.5rem;">
+            <i class="fas fa-list"></i> Gestión de Categorías
+        </h1>
+        <p class="text-muted mb-0">Administra las categorías de productos</p>
+    </div>
+    <a href="{% url 'admin_category_create' %}" class="btn-create">
+        <i class="fas fa-plus"></i> Nueva Categoría
+    </a>
+</div>
+
+<div class="categories-table">
+    <table class="table table-hover mb-0">
+        <thead style="background: var(--primary-color); color: white;">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th>Productos</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+                <tr>
+                    <td><strong>{{ cat.id }}</strong></td>
+                    <td>
+                        <strong style="color: var(--primary-color);">{{ cat.name }}</strong>
+                    </td>
+                    <td>{{ cat.description|truncatechars:50 }}</td>
+                    <td>
+                        {% if cat.is_active %}
+                            <span class="badge bg-success">Activa</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">{{ cat.product_set.count }} productos</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'admin_category_edit' cat.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{% url 'admin_category_delete' cat.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar esta categoría?')">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <i class="fas fa-box-open" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="text-muted mt-3">No hay categorías creadas</p>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

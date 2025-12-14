@@ -1,0 +1,300 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .order-detail-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .order-header-card {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .order-info-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+    }
+
+    .items-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .table-custom {
+        margin-bottom: 0;
+    }
+
+    .table-custom thead {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .table-custom thead th {
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+    }
+
+    .table-custom tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .status-update-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .btn-update:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .total-section {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-top: 1rem;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .total-label {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .total-amount {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+</style>
+
+<div class="order-detail-container">
+    <!-- Header -->
+    <div class="order-header-card">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 style="font-weight: bold; margin-bottom: 0.5rem;">
+                    <i class="fas fa-file-invoice"></i> {{ order.order_number }}
+                </h1>
+                <p class="mb-0 opacity-75">Detalle de la Orden</p>
+            </div>
+            <div>
+                <a href="{% url 'admin_orders' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información General -->
+    <div class="order-info-card">
+        <h4 style="font-weight: bold; color: var(--dark-bg); margin-bottom: 1.5rem;">
+            <i class="fas fa-info-circle"></i> Información General
+        </h4>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-user"></i> Cliente
+                </div>
+                <div class="info-value">
+                    {% if order.customer %}
+                        {{ order.customer.username }}
+                    {% else %}
+                        Sin usuario
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-calendar"></i> Fecha
+                </div>
+                <div class="info-value">
+                    {{ order.created_at|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-credit-card"></i> Método de Pago
+                </div>
+                <div class="info-value">
+                    {% if order.payment_method == 'cash' %}
+                        <i class="fas fa-money-bill-wave"></i> Efectivo
+                    {% else %}
+                        {{ order.payment_method|title }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">
+                    <i class="fas fa-money-check"></i> Estado de Pago
+                </div>
+                <div class="info-value">
+                    {% if order.payment_status == 'paid' %}
+                        <span style="color: #28a745;">
+                            <i class="fas fa-check-circle"></i> Pagado
+                        </span>
+                    {% else %}
+                        <span style="color: #ffc107;">
+                            <i class="fas fa-clock"></i> Pendiente
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if order.notes %}
+            <div class="alert alert-info">
+                <strong><i class="fas fa-sticky-note"></i> Notas:</strong><br>
+                {{ order.notes }}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Productos -->
+    <div class="items-table">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-box"></i> Producto</th>
+                    <th class="text-center"><i class="fas fa-hashtag"></i> Cantidad</th>
+                    <th class="text-end"><i class="fas fa-dollar-sign"></i> Precio Unit.</th>
+                    <th class="text-end"><i class="fas fa-calculator"></i> Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.product.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ item.product.category.name }}</small>
+                        </td>
+                        <td class="text-center">
+                            <span style="background: #f8f9fa; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold;">
+                                {{ item.quantity }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            ${{ item.unit_price }} MXN
+                        </td>
+                        <td class="text-end">
+                            <strong style="color: var(--primary-color);">
+                                ${{ item.subtotal }} MXN
+                            </strong>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <div class="total-row">
+                <div class="total-label">
+                    <i class="fas fa-receipt"></i> TOTAL A PAGAR:
+                </div>
+                <div class="total-amount">
+                    ${{ order.total }} MXN
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actualizar Estado -->
+    <div class="status-update-card">
+        <h4 style="font-weight: bold; color: var(--dark-bg); margin-bottom: 1.5rem;">
+            <i class="fas fa-edit"></i> Actualizar Estado de la Orden
+        </h4>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-traffic-light"></i> Estado de la Orden
+                    </label>
+                    <select name="status" class="form-select form-select-lg">
+                        <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>
+                            Pendiente
+                        </option>
+                        <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>
+                            Completada
+                        </option>
+                        <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>
+                            Cancelada
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn-update w-100">
+                        <i class="fas fa-save"></i> Actualizar Estado
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -26,24 +26,24 @@ urlpatterns = [
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
     
     # Admin - Dashboard
-    path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('panel/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     
     # Admin - Productos
-    path('admin/products/', views.admin_products, name='admin_products'),
-    path('admin/products/create/', views.admin_product_create, name='admin_product_create'),
-    path('admin/products/edit/<int:product_id>/', views.admin_product_edit, name='admin_product_edit'),
-    path('admin/products/delete/<int:product_id>/', views.admin_product_delete, name='admin_product_delete'),
+    path('panel/products/', views.admin_products, name='admin_products'),
+    path('panel/products/create/', views.admin_product_create, name='admin_product_create'),
+    path('panel/products/edit/<int:product_id>/', views.admin_product_edit, name='admin_product_edit'),
+    path('panel/products/delete/<int:product_id>/', views.admin_product_delete, name='admin_product_delete'),
     
     # Admin - Categorías
-    path('admin/categories/', views.admin_categories, name='admin_categories'),
-    path('admin/categories/create/', views.admin_category_create, name='admin_category_create'),
-    path('admin/categories/edit/<int:category_id>/', views.admin_category_edit, name='admin_category_edit'),
-    path('admin/categories/delete/<int:category_id>/', views.admin_category_delete, name='admin_category_delete'),
+    path('panel/categories/', views.admin_categories, name='admin_categories'),
+    path('panel/categories/create/', views.admin_category_create, name='admin_category_create'),
+    path('panel/categories/edit/<int:category_id>/', views.admin_category_edit, name='admin_category_edit'),
+    path('panel/categories/delete/<int:category_id>/', views.admin_category_delete, name='admin_category_delete'),
     
     # Admin - Órdenes
-    path('admin/orders/', views.admin_orders, name='admin_orders'),
-    path('admin/orders/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
+    path('panel/orders/', views.admin_orders, name='admin_orders'),
+    path('panel/orders/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
     
     # Reportes
-    path('admin/reports/', views.reports, name='reports'),
+    path('panel/reports/', views.reports, name='reports'),
 ]
