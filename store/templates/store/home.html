@@ -2,7 +2,6 @@
 {% block content %}
 
 <style>
-    /* Hero Section */
     .hero-section {
         background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
         color: white;
@@ -54,7 +53,6 @@
         }
     }
 
-    /* Categories Section */
     .categories-section {
         margin-bottom: 3rem;
     }
@@ -76,20 +74,10 @@
         box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
-    .category-card.active {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-    }
-
     .category-icon {
         font-size: 3rem;
         margin-bottom: 1rem;
         color: var(--primary-color);
-    }
-
-    .category-card.active .category-icon {
-        color: var(--accent-color);
     }
 
     .category-name {
@@ -97,7 +85,6 @@
         font-size: 1.1rem;
     }
 
-    /* Products Grid */
     .products-header {
         display: flex;
         justify-content: space-between;
@@ -154,38 +141,6 @@
         background: #28a745;
     }
 
-    .product-badge.oferta {
-        background: #dc3545;
-    }
-
-    .wishlist-btn {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        background: white;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
-        z-index: 2;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    .wishlist-btn:hover {
-        background: #dc3545;
-        color: white;
-        transform: scale(1.1);
-    }
-
-    .wishlist-btn.active {
-        background: #dc3545;
-        color: white;
-    }
-
     .product-body {
         padding: 1.5rem;
     }
@@ -238,7 +193,7 @@
         margin-top: 1rem;
     }
 
-    .btn-add-cart {
+    .btn-buy {
         flex: 1;
         background: var(--primary-color);
         color: white;
@@ -247,11 +202,15 @@
         border-radius: 10px;
         font-weight: 600;
         transition: all 0.3s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
     }
 
-    .btn-add-cart:hover {
+    .btn-buy:hover {
         background: var(--secondary-color);
         transform: translateY(-2px);
+        color: white;
     }
 
     .btn-details {
@@ -262,31 +221,15 @@
         border-radius: 10px;
         font-weight: 600;
         transition: all 0.3s;
+        text-decoration: none;
     }
 
     .btn-details:hover {
         background: var(--primary-color);
         color: white;
     }
-
-    /* Filter Section */
-    .filter-section {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        margin-bottom: 2rem;
-    }
-
-    .filter-title {
-        font-weight: bold;
-        color: var(--dark-bg);
-        margin-bottom: 1rem;
-        font-size: 1.1rem;
-    }
 </style>
 
-<!-- Hero Section -->
 <div class="hero-section">
     <div class="container">
         <div class="row align-items-center">
@@ -295,10 +238,10 @@
                     <i class="fas fa-mug-hot"></i> Bienvenido a CafeITO
                 </h1>
                 <p class="hero-subtitle">
-                    Descubre los mejores cafés artesanales, seleccionados especialmente para ti
+                    Descubre los mejores cafés y productos de panadería artesanales
                 </p>
                 <a href="#productos" class="btn btn-coffee btn-lg mt-3">
-                    <i class="fas fa-shopping-bag"></i> Explorar Productos
+                    <i class="fas fa-shopping-bag"></i> Ver Productos
                 </a>
             </div>
             <div class="col-lg-6 text-center">
@@ -308,16 +251,15 @@
     </div>
 </div>
 
-<!-- Categories Section -->
 <div class="categories-section">
     <h2 class="text-center mb-4" style="font-weight: bold; color: var(--dark-bg);">
-        <i class="fas fa-th-large"></i> Categorías
+        <i class="fas fa-list"></i> Nuestras Categorías
     </h2>
     <div class="row g-3">
         <div class="col-6 col-md-3">
             <div class="category-card" onclick="window.location.href='{% url 'home' %}'">
                 <div class="category-icon">
-                    <i class="fas fa-border-all"></i>
+                    <i class="fas fa-th"></i>
                 </div>
                 <div class="category-name">Todos</div>
             </div>
@@ -326,7 +268,17 @@
             <div class="col-6 col-md-3">
                 <div class="category-card" onclick="window.location.href='{% url 'products_by_category' c.id %}'">
                     <div class="category-icon">
-                        <i class="fas fa-mug-hot"></i>
+                        {% if 'pan' in c.name|lower or 'bread' in c.name|lower %}
+                            <i class="fas fa-bread-slice"></i>
+                        {% elif 'cafe' in c.name|lower or 'coffee' in c.name|lower %}
+                            <i class="fas fa-mug-hot"></i>
+                        {% elif 'pastel' in c.name|lower or 'cake' in c.name|lower %}
+                            <i class="fas fa-birthday-cake"></i>
+                        {% elif 'galleta' in c.name|lower or 'cookie' in c.name|lower %}
+                            <i class="fas fa-cookie"></i>
+                        {% else %}
+                            <i class="fas fa-cookie-bite"></i>
+                        {% endif %}
                     </div>
                     <div class="category-name">{{ c.name }}</div>
                 </div>
@@ -335,7 +287,6 @@
     </div>
 </div>
 
-<!-- Products Section -->
 <div id="productos">
     <div class="products-header">
         <h2 style="font-weight: bold; color: var(--dark-bg); margin: 0;">
@@ -354,15 +305,9 @@
                         {% if p.image_url %}
                             <img src="{{ p.image_url }}" alt="{{ p.name }}">
                         {% else %}
-                            <img src="https://via.placeholder.com/400x300/6F4E37/FFFFFF?text=CafeITO" alt="{{ p.name }}">
+                            <img src="https://via.placeholder.com/400x300/6F4E37/FFFFFF?text={{ p.name }}" alt="{{ p.name }}">
                         {% endif %}
                         
-                        <!-- Wishlist Button -->
-                        <div class="wishlist-btn" onclick="toggleWishlist({{ p.id }}, this)">
-                            <i class="far fa-heart"></i>
-                        </div>
-
-                        <!-- Badge (opcional) -->
                         {% if forloop.counter <= 3 %}
                             <div class="product-badge nuevo">Nuevo</div>
                         {% endif %}
@@ -375,10 +320,10 @@
                         
                         <div class="product-footer">
                             <div>
-                                <div class="product-price">${{ p.price }}</div>
+                                <div class="product-price">${{ p.price }} MXN</div>
                                 <div class="product-stock">
                                     {% if p.stock > 0 %}
-                                        <i class="fas fa-check-circle text-success"></i> En stock
+                                        <i class="fas fa-check-circle text-success"></i> {{ p.stock }} disponibles
                                     {% else %}
                                         <i class="fas fa-times-circle text-danger"></i> Agotado
                                     {% endif %}
@@ -387,13 +332,9 @@
                         </div>
 
                         <div class="product-actions">
-                            <form action="{% url 'add_to_cart' p.id %}" method="post" style="flex: 1;">
-                                {% csrf_token %}
-                                <input type="hidden" name="qty" value="1">
-                                <button class="btn-add-cart w-100" type="submit" {% if p.stock == 0 %}disabled{% endif %}>
-                                    <i class="fas fa-cart-plus"></i> Agregar
-                                </button>
-                            </form>
+                            <a href="{% url 'quick_sale' p.id %}" class="btn-buy" {% if p.stock == 0 %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
+                                <i class="fas fa-cash-register"></i> Comprar
+                            </a>
                             <a href="{% url 'product_detail' p.id %}" class="btn-details">
                                 <i class="fas fa-eye"></i>
                             </a>
@@ -411,41 +352,10 @@
 </div>
 
 <script>
-    function toggleWishlist(productId, element) {
-        element.classList.toggle('active');
-        const icon = element.querySelector('i');
-        
-        if (element.classList.contains('active')) {
-            icon.classList.remove('far');
-            icon.classList.add('fas');
-            
-            // Aquí harías el POST a tu vista de favoritos
-            fetch(`/wishlist/add/${productId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
-                }
-            });
-        } else {
-            icon.classList.remove('fas');
-            icon.classList.add('far');
-            
-            // Aquí harías el DELETE
-            fetch(`/wishlist/remove/${productId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
-                }
-            });
-        }
-    }
-
-    // Smooth scroll to products
     document.querySelector('a[href="#productos"]')?.addEventListener('click', (e) => {
         e.preventDefault();
         document.getElementById('productos').scrollIntoView({ behavior: 'smooth' });
     });
 </script>
+
 {% endblock %}

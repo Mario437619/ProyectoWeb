@@ -1,56 +1,209 @@
 {% extends 'store/base.html' %}
 
 {% block content %}
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 70vh;">
-    <div class="card shadow-sm rounded p-5 w-100" style="max-width: 400px;">
-        <h2 class="text-center text-primary fw-bold mb-4">Crear Cuenta</h2>
-        
-        <form method="POST">
-            {% csrf_token %}
-            
-            <!-- Campos del formulario -->
-            <div class="mb-3">
-                {{ form.username.label_tag }} 
-                {{ form.username }}
-                {% if form.username.errors %}
-                    <div class="text-danger small">{{ form.username.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="mb-3">
-                {{ form.email.label_tag }}
-                {{ form.email }}
-                {% if form.email.errors %}
-                    <div class="text-danger small">{{ form.email.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="mb-3">
-                {{ form.password1.label_tag }}
-                {{ form.password1 }}
-                {% if form.password1.errors %}
-                    <div class="text-danger small">{{ form.password1.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <div class="mb-3">
-                {{ form.password2.label_tag }}
-                {{ form.password2 }}
-                {% if form.password2.errors %}
-                    <div class="text-danger small">{{ form.password2.errors }}</div>
-                {% endif %}
-            </div>
+<style>
+    .register-container {
+        min-height: 75vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-            <!-- Botón de registro -->
-            <div class="d-grid mt-3">
-                <button type="submit" class="btn btn-primary btn-lg">Registrarse</button>
-            </div>
-        </form>
+    .register-card {
+        background: white;
+        border-radius: 25px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        overflow: hidden;
+        max-width: 900px;
+        width: 100%;
+    }
 
-        <!-- Enlace a login -->
-        <p class="text-center mt-4 mb-0">
-            ¿Ya tienes una cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a>
-        </p>
+    .register-image {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .register-image::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    .register-image i {
+        font-size: 6rem;
+        margin-bottom: 2rem;
+        color: var(--accent-color);
+    }
+
+    .register-image h2 {
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+
+    .register-form {
+        padding: 3rem;
+    }
+
+    .form-title {
+        color: var(--dark-bg);
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+    }
+
+    .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.15);
+    }
+
+    .input-icon {
+        position: relative;
+    }
+
+    .input-icon i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--secondary-color);
+    }
+
+    .input-icon input {
+        padding-left: 45px;
+    }
+
+    .btn-register {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .login-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .login-link a {
+        color: var(--primary-color);
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .login-link a:hover {
+        color: var(--accent-color);
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="row g-0">
+            <div class="col-lg-5">
+                <div class="register-image h-100">
+                    <i class="fas fa-user-plus"></i>
+                    <h2>¡Únete a nosotros!</h2>
+                    <p>Crea tu cuenta y disfruta de nuestros productos</p>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="register-form">
+                    <h3 class="form-title">
+                        <i class="fas fa-edit"></i> Crear Cuenta
+                    </h3>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nombre de Usuario</label>
+                            <div class="input-icon">
+                                <i class="fas fa-user"></i>
+                                {{ form.username }}
+                            </div>
+                            {% if form.username.errors %}
+                                <div class="text-danger small mt-1">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Correo Electrónico</label>
+                            <div class="input-icon">
+                                <i class="fas fa-envelope"></i>
+                                {{ form.email }}
+                            </div>
+                            {% if form.email.errors %}
+                                <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Contraseña</label>
+                            <div class="input-icon">
+                                <i class="fas fa-lock"></i>
+                                {{ form.password1 }}
+                            </div>
+                            {% if form.password1.errors %}
+                                <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Confirmar Contraseña</label>
+                            <div class="input-icon">
+                                <i class="fas fa-lock"></i>
+                                {{ form.password2 }}
+                            </div>
+                            {% if form.password2.errors %}
+                                <div class="text-danger small mt-1">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-register w-100">
+                            <i class="fas fa-user-plus"></i> Registrarse
+                        </button>
+                    </form>
+
+                    <div class="login-link">
+                        ¿Ya tienes una cuenta? 
+                        <a href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt"></i> Inicia sesión aquí
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

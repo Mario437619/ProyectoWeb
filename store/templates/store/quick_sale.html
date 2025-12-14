@@ -1,0 +1,292 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .sale-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .product-info-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .product-img {
+        width: 100%;
+        max-width: 300px;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .product-name {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 1rem;
+    }
+
+    .product-price-big {
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .sale-form-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .form-group-custom {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group-custom label {
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 0.5rem;
+        display: block;
+        font-size: 1.1rem;
+    }
+
+    .form-control-lg-custom {
+        padding: 1rem;
+        font-size: 1.5rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .form-control-lg-custom:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.15);
+    }
+
+    .calc-display {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border: 2px solid #e0e0e0;
+    }
+
+    .calc-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 1.2rem;
+    }
+
+    .calc-row.total {
+        border-top: 2px solid var(--primary-color);
+        margin-top: 1rem;
+        padding-top: 1rem;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .calc-row.change {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .btn-complete-sale {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 1.2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.3rem;
+        width: 100%;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .btn-complete-sale:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .stock-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .stock-available {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .stock-low {
+        background: #fff3cd;
+        color: #856404;
+    }
+</style>
+
+<div class="sale-container">
+    <h2 class="text-center mb-4" style="font-weight: bold; color: var(--dark-bg);">
+        <i class="fas fa-cash-register"></i> Venta Rápida
+    </h2>
+
+    <!-- Información del Producto -->
+    <div class="product-info-card">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+                {% if product.image_url %}
+                    <img src="{{ product.image_url }}" class="product-img" alt="{{ product.name }}">
+                {% else %}
+                    <img src="https://via.placeholder.com/300/6F4E37/FFFFFF?text={{ product.name }}" class="product-img" alt="{{ product.name }}">
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <div class="product-name">{{ product.name }}</div>
+                <p class="text-muted mb-3">{{ product.description }}</p>
+                <div class="product-price-big">${{ product.price }} MXN</div>
+                {% if product.stock > 10 %}
+                    <span class="stock-badge stock-available">
+                        <i class="fas fa-check-circle"></i> {{ product.stock }} disponibles
+                    </span>
+                {% elif product.stock > 0 %}
+                    <span class="stock-badge stock-low">
+                        <i class="fas fa-exclamation-triangle"></i> Solo {{ product.stock }} disponibles
+                    </span>
+                {% else %}
+                    <span class="stock-badge" style="background: #f8d7da; color: #721c24;">
+                        <i class="fas fa-times-circle"></i> Agotado
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Venta -->
+    <div class="sale-form-card">
+        <h4 class="mb-4" style="font-weight: bold; color: var(--dark-bg);">
+            <i class="fas fa-calculator"></i> Realizar Venta
+        </h4>
+
+        <form method="POST" id="saleForm">
+            {% csrf_token %}
+
+            <div class="form-group-custom">
+                <label for="quantity">
+                    <i class="fas fa-boxes"></i> Cantidad
+                </label>
+                <input type="number" class="form-control form-control-lg-custom" 
+                       id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}" 
+                       required onchange="calculateTotal()">
+            </div>
+
+            <div class="calc-display">
+                <div class="calc-row">
+                    <span>Precio unitario:</span>
+                    <span id="unit-price">${{ product.price }} MXN</span>
+                </div>
+                <div class="calc-row">
+                    <span>Cantidad:</span>
+                    <span id="display-quantity">1</span>
+                </div>
+                <div class="calc-row total">
+                    <span>TOTAL A PAGAR:</span>
+                    <span id="total-amount">${{ product.price }} MXN</span>
+                </div>
+            </div>
+
+            <div class="form-group-custom">
+                <label for="payment_received">
+                    <i class="fas fa-money-bill-wave"></i> Pago Recibido
+                </label>
+                <input type="number" class="form-control form-control-lg-custom" 
+                       id="payment_received" name="payment_received" step="0.01" min="0" 
+                       required onchange="calculateChange()" placeholder="0.00">
+            </div>
+
+            <div class="calc-display" id="change-display" style="display: none;">
+                <div class="calc-row change">
+                    <span>CAMBIO:</span>
+                    <span id="change-amount">$0.00 MXN</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-complete-sale" id="btn-submit" disabled>
+                <i class="fas fa-check-circle"></i> Completar Venta
+            </button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Cancelar
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const unitPrice = {{ product.price }};
+    const maxStock = {{ product.stock }};
+
+    function calculateTotal() {
+        const quantity = parseInt(document.getElementById('quantity').value) || 1;
+        
+        if (quantity > maxStock) {
+            alert(`Solo hay ${maxStock} unidades disponibles`);
+            document.getElementById('quantity').value = maxStock;
+            return calculateTotal();
+        }
+
+        const total = unitPrice * quantity;
+        
+        document.getElementById('display-quantity').textContent = quantity;
+        document.getElementById('total-amount').textContent = `$${total.toFixed(2)} MXN`;
+        
+        calculateChange();
+    }
+
+    function calculateChange() {
+        const quantity = parseInt(document.getElementById('quantity').value) || 1;
+        const total = unitPrice * quantity;
+        const payment = parseFloat(document.getElementById('payment_received').value) || 0;
+        const change = payment - total;
+        
+        const changeDisplay = document.getElementById('change-display');
+        const changeAmount = document.getElementById('change-amount');
+        const btnSubmit = document.getElementById('btn-submit');
+        
+        if (payment > 0) {
+            changeDisplay.style.display = 'block';
+            
+            if (change >= 0) {
+                changeAmount.textContent = `$${change.toFixed(2)} MXN`;
+                changeAmount.style.color = '#28a745';
+                btnSubmit.disabled = false;
+            } else {
+                changeAmount.textContent = `FALTA: $${Math.abs(change).toFixed(2)} MXN`;
+                changeAmount.style.color = '#dc3545';
+                btnSubmit.disabled = true;
+            }
+        } else {
+            changeDisplay.style.display = 'none';
+            btnSubmit.disabled = true;
+        }
+    }
+
+    // Calcular al cargar la página
+    calculateTotal();
+</script>
+
+{% endblock %}

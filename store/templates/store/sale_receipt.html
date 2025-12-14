@@ -1,0 +1,224 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .receipt-container {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .receipt {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 3px dashed var(--primary-color);
+    }
+
+    .receipt-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px dashed #ccc;
+    }
+
+    .receipt-logo {
+        font-size: 4rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .store-name {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 0.5rem;
+    }
+
+    .receipt-info {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px dashed #ccc;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .receipt-items {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px dashed #ccc;
+    }
+
+    .item-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        align-items: center;
+    }
+
+    .item-name {
+        font-weight: 600;
+        flex: 1;
+    }
+
+    .item-quantity {
+        margin: 0 1rem;
+        color: #666;
+    }
+
+    .item-price {
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .receipt-total {
+        margin-bottom: 1.5rem;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .total-row.final {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        padding-top: 1rem;
+        border-top: 2px solid var(--primary-color);
+    }
+
+    .receipt-footer {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .success-badge {
+        background: #d4edda;
+        color: #155724;
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-weight: 600;
+    }
+
+    .success-badge i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-print {
+        flex: 1;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.8rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-print:hover {
+        background: var(--secondary-color);
+        transform: translateY(-2px);
+    }
+
+    @media print {
+        .action-buttons, .navbar, .footer {
+            display: none !important;
+        }
+        
+        .receipt {
+            box-shadow: none;
+            border: none;
+        }
+    }
+</style>
+
+<div class="receipt-container">
+    <div class="success-badge">
+        <i class="fas fa-check-circle"></i>
+        ¡Venta Completada Exitosamente!
+    </div>
+
+    <div class="receipt" id="receipt">
+        <div class="receipt-header">
+            <div class="receipt-logo">
+                <i class="fas fa-mug-hot"></i>
+            </div>
+            <div class="store-name">CafeITO</div>
+            <p class="mb-0">Tu Panadería y Cafetería Favorita</p>
+            <p class="mb-0 small text-muted">Ciudad de México, México</p>
+        </div>
+
+        <div class="receipt-info">
+            <div class="info-row">
+                <strong>Ticket #:</strong>
+                <span>{{ order.order_number }}</span>
+            </div>
+            <div class="info-row">
+                <strong>Fecha:</strong>
+                <span>{{ order.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+            <div class="info-row">
+                <strong>Vendedor:</strong>
+                <span>{{ order.customer.username }}</span>
+            </div>
+        </div>
+
+        <div class="receipt-items">
+            <h5 class="mb-3" style="font-weight: bold;">Productos:</h5>
+            {% for item in items %}
+                <div class="item-row">
+                    <div class="item-name">{{ item.product.name }}</div>
+                    <div class="item-quantity">x{{ item.quantity }}</div>
+                    <div class="item-price">${{ item.subtotal }} MXN</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="receipt-total">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span>${{ order.total }} MXN</span>
+            </div>
+            <div class="total-row final">
+                <span>TOTAL:</span>
+                <span>${{ order.total }} MXN</span>
+            </div>
+        </div>
+
+        <div class="receipt-footer">
+            <p class="mb-2">¡Gracias por su compra!</p>
+            <p class="mb-0 small">Este ticket es su comprobante de compra</p>
+            <p class="mb-0 small">Conserve su ticket</p>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <button onclick="window.print()" class="btn-print">
+            <i class="fas fa-print"></i> Imprimir Ticket
+        </button>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary" style="flex: 1; text-align: center; padding: 0.8rem;">
+            <i class="fas fa-home"></i> Volver al Inicio
+        </a>
+    </div>
+</div>
+
+{% endblock %}

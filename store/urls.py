@@ -1,4 +1,4 @@
-# urls.py (dentro de tu app store)
+# urls.py - COMPLETO Y ACTUALIZADO
 
 from django.urls import path
 from . import views
@@ -17,24 +17,13 @@ urlpatterns = [
     path('category/<int:category_id>/', views.products_by_category, name='products_by_category'),
     path('product/<int:product_id>/', views.product_detail, name='product_detail'),
     
-    # Carrito
-    path('cart/', views.cart_view, name='cart'),
-    path('cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
-    path('cart/remove/<int:product_id>/', views.remove_from_cart, name='remove_from_cart'),
-    path('cart/update/<int:product_id>/', views.update_cart_qty, name='update_cart_qty'),
-    path('checkout/', views.checkout, name='checkout'),
-    
-    # Wishlist (Favoritos)
-    path('wishlist/', views.wishlist, name='wishlist'),
-    path('wishlist/add/<int:product_id>/', views.add_to_wishlist, name='add_to_wishlist'),
-    path('wishlist/remove/<int:product_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
+    # VENTA RÁPIDA (sin carrito)
+    path('sale/<int:product_id>/', views.quick_sale, name='quick_sale'),
+    path('receipt/<int:order_id>/', views.sale_receipt, name='sale_receipt'),
     
     # Órdenes de usuario
     path('my-orders/', views.user_orders, name='user_orders'),
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
-    
-    # API
-    path('api/cart-count/', views.cart_count, name='cart_count'),
     
     # Admin - Dashboard
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),

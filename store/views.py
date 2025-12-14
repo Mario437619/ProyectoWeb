@@ -1,4 +1,4 @@
-# views.py - ARCHIVO COMPLETO
+# views.py - CÓDIGO COMPLETO PARA CAFEITO
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout as auth_logout
@@ -15,26 +15,44 @@ from .models import Category, Product, Order, OrderItem, InventoryLog
 from .forms import RegisterForm, ProductForm
 
 
+# ========================================
+# FUNCIONES DE UTILIDAD
+# ========================================
+
 def is_admin(user):
     return user.is_staff
 
 
+# ========================================
+# VISTAS PÚBLICAS
+# ========================================
+
 def home(request):
     categories = Category.objects.filter(is_active=True)
     products = Product.objects.filter(is_active=True)[:20]
-    return render(request, 'store/home.html', {'categories': categories, 'products': products})
+    return render(request, 'store/home.html', {
+        'categories': categories, 
+        'products': products
+    })
 
 
 def products_by_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
     products = Product.objects.filter(category=category, is_active=True)
-    return render(request, 'store/category_products.html', {'category': category, 'products': products})
+    return render(request, 'store/category_products.html', {
+        'category': category, 
+        'products': products
+    })
 
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     return render(request, 'store/product_detail.html', {'product': product})
 
+
+# ========================================
+# AUTENTICACIÓN
+# ========================================
 
 def user_register(request):
     if request.method == 'POST':
@@ -65,92 +83,186 @@ def user_logout(request):
     return redirect('login')
 
 
-# Cart (session-based)
-def _get_cart(request):
-    return request.session.setdefault('cart', {})
+# ========================================
+# BÚSQUEDA DE PRODUCTOS
+# ========================================
+
+def search_products(request):
+    query = request.GET.get('q', '')
+    products = Product.objects.filter(is_active=True)
+    
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | 
+            Q(description__icontains=query) |
+            Q(category__name__icontains=query)
+        )
+    
+    return render(request, 'store/search_results.html', {
+        'products': products, 
+        'query': query
+    })
 
 
-def add_to_cart(request, product_id):
-    cart = _get_cart(request)
-    qty = int(request.POST.get('qty', 1))
-    cart[str(product_id)] = cart.get(str(product_id), 0) + qty
-    request.session['cart'] = cart
-    messages.success(request, 'Producto agregado al carrito')
-    return redirect('cart')
-
-
-def cart_view(request):
-    cart = _get_cart(request)
-    items = []
-    total = 0
-    for pid, qty in cart.items():
-        p = Product.objects.get(id=int(pid))
-        subtotal = float(p.price) * int(qty)
-        items.append({'product': p, 'qty': qty, 'subtotal': subtotal})
-        total += subtotal
-    return render(request, 'store/cart.html', {'items': items, 'total': total})
-
-
-def remove_from_cart(request, product_id):
-    cart = _get_cart(request)
-    cart.pop(str(product_id), None)
-    request.session['cart'] = cart
-    return redirect('cart')
-
+# ========================================
+# SISTEMA DE VENTA RÁPIDA (SIN CARRITO)
+# ========================================
 
 @login_required
-def checkout(request):
-    cart = _get_cart(request)
-    if not cart:
-        messages.error(request, 'Carrito vacío')
-        return redirect('home')
-
+def quick_sale(request, product_id):
+    """Vista para venta rápida de un producto"""
+    product = get_object_or_404(Product, id=product_id)
+    
     if request.method == 'POST':
-        order_number = f"ORD-{int(time.time()*1000)}-{random.randint(100,999)}"
-        total = 0
-        for pid, qty in cart.items():
-            p = Product.objects.get(id=int(pid))
-            total += float(p.price) * int(qty)
-
+        quantity = int(request.POST.get('quantity', 1))
+        payment_received = float(request.POST.get('payment_received', 0))
+        
+        # Calcular totales
+        subtotal = float(product.price) * quantity
+        total = subtotal
+        change = payment_received - total
+        
+        # Validar stock
+        if quantity > product.stock:
+            messages.error(request, f'Solo hay {product.stock} unidades disponibles')
+            return redirect('quick_sale', product_id=product_id)
+        
+        # Validar pago
+        if payment_received < total:
+            messages.error(request, 'El pago recibido es insuficiente')
+            return redirect('quick_sale', product_id=product_id)
+        
+        # Crear orden
         now = timezone.now()
+        order_number = f"ORD-{int(time.time()*1000)}-{random.randint(100,999)}"
+        
         order = Order.objects.create(
             order_number=order_number,
             customer=request.user,
             total=total,
-            status='pending',
+            status='completed',
             payment_method='cash',
-            payment_status='pending',
+            payment_status='paid',
             created_at=now,
             updated_at=now
         )
+        
+        # Crear item de orden
+        OrderItem.objects.create(
+            order=order,
+            product=product,
+            quantity=quantity,
+            unit_price=product.price,
+            subtotal=subtotal,
+            created_at=now
+        )
+        
+        # Actualizar stock
+        product.stock -= quantity
+        product.save()
+        
+        # Log de inventario
+        InventoryLog.objects.create(
+            product=product,
+            quantity_change=-quantity,
+            reason='Venta directa',
+            created_at=now
+        )
+        
+        messages.success(request, f'¡Venta completada! Cambio: ${change:.2f} MXN')
+        return redirect('sale_receipt', order_id=order.id)
+    
+    return render(request, 'store/quick_sale.html', {'product': product})
 
-        for pid, qty in cart.items():
-            p = Product.objects.get(id=int(pid))
-            qty_int = int(qty)
-            subtotal = float(p.price) * qty_int
-            OrderItem.objects.create(
-                order=order,
-                product=p,
-                quantity=qty_int,
-                unit_price=p.price,
-                subtotal=subtotal,
-                created_at=now
-            )
-            p.stock = p.stock - qty_int
-            p.save()
-            InventoryLog.objects.create(
-                product=p,
-                quantity_change=-qty_int,
-                reason='Venta',
-                created_at=now
-            )
 
-        request.session['cart'] = {}
-        messages.success(request, f'Orden {order_number} creada correctamente')
-        return redirect('home')
+@login_required
+def sale_receipt(request, order_id):
+    """Vista para mostrar el ticket de venta"""
+    order = get_object_or_404(Order, id=order_id)
+    items = OrderItem.objects.filter(order=order)
+    return render(request, 'store/sale_receipt.html', {
+        'order': order, 
+        'items': items
+    })
 
-    return render(request, 'store/checkout.html')
 
+# ========================================
+# HISTORIAL DE ÓRDENES DEL USUARIO
+# ========================================
+
+@login_required
+def user_orders(request):
+    orders = Order.objects.filter(customer=request.user).order_by('-created_at')
+    return render(request, 'store/user_orders.html', {'orders': orders})
+
+
+@login_required
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+    items = OrderItem.objects.filter(order=order)
+    return render(request, 'store/order_detail.html', {
+        'order': order, 
+        'items': items
+    })
+
+
+# ========================================
+# PANEL DE ADMINISTRACIÓN - DASHBOARD
+# ========================================
+
+@user_passes_test(is_admin)
+def admin_dashboard(request):
+    today = timezone.now().date()
+    
+    # Estadísticas generales
+    total_products = Product.objects.count()
+    total_orders = Order.objects.count()
+    total_customers = Order.objects.values('customer').distinct().count()
+    
+    # Ventas del mes
+    month_start = today.replace(day=1)
+    monthly_sales = Order.objects.filter(
+        created_at__gte=month_start
+    ).aggregate(Sum('total'))['total__sum'] or 0
+    
+    # Ventas de hoy
+    daily_sales = Order.objects.filter(
+        created_at__date=today
+    ).aggregate(Sum('total'))['total__sum'] or 0
+    
+    # Productos con poco stock
+    low_stock = Product.objects.filter(
+        stock__lt=10, 
+        is_active=True
+    ).order_by('stock')[:10]
+    
+    # Últimas órdenes
+    recent_orders = Order.objects.order_by('-created_at')[:10]
+    
+    # Productos más vendidos
+    top_products = OrderItem.objects.values(
+        'product__name'
+    ).annotate(
+        total_qty=Sum('quantity')
+    ).order_by('-total_qty')[:10]
+    
+    context = {
+        'total_products': total_products,
+        'total_orders': total_orders,
+        'total_customers': total_customers,
+        'monthly_sales': monthly_sales,
+        'daily_sales': daily_sales,
+        'low_stock': low_stock,
+        'recent_orders': recent_orders,
+        'top_products': top_products,
+    }
+    
+    return render(request, 'store/admin_dashboard.html', context)
+
+
+# ========================================
+# PANEL DE ADMINISTRACIÓN - PRODUCTOS
+# ========================================
 
 @user_passes_test(is_admin)
 def admin_products(request):
@@ -199,158 +311,16 @@ def admin_product_delete(request, product_id):
     return redirect('admin_products')
 
 
-@user_passes_test(is_admin)
-def reports(request):
-    today = timezone.now().date()
-    orders_today = Order.objects.filter(created_at__date=today)
-    total_today = orders_today.aggregate(Sum('total'))['total__sum'] or 0
-    sold = OrderItem.objects.values('product__name').annotate(
-        total_qty=Sum('quantity')
-    ).order_by('-total_qty')[:10]
-    return render(request, 'store/reports.html', {
-        'orders_today': orders_today,
-        'total_today': total_today,
-        'sold': sold
-    })
-
-
 # ========================================
-# NUEVAS FUNCIONALIDADES
+# PANEL DE ADMINISTRACIÓN - CATEGORÍAS
 # ========================================
 
-# 1. BÚSQUEDA DE PRODUCTOS
-def search_products(request):
-    query = request.GET.get('q', '')
-    products = Product.objects.filter(is_active=True)
-    
-    if query:
-        products = products.filter(
-            Q(name__icontains=query) | 
-            Q(description__icontains=query) |
-            Q(category__name__icontains=query)
-        )
-    
-    return render(request, 'store/search_results.html', {
-        'products': products, 
-        'query': query
-    })
-
-
-# 2. SISTEMA DE FAVORITOS (WISHLIST)
-@login_required
-def wishlist(request):
-    wishlist_ids = request.session.get('wishlist', [])
-    products = Product.objects.filter(id__in=wishlist_ids, is_active=True)
-    return render(request, 'store/wishlist.html', {'products': products})
-
-
-@login_required
-def add_to_wishlist(request, product_id):
-    wishlist = request.session.get('wishlist', [])
-    if product_id not in wishlist:
-        wishlist.append(product_id)
-        request.session['wishlist'] = wishlist
-        return JsonResponse({'status': 'added', 'count': len(wishlist)})
-    return JsonResponse({'status': 'exists', 'count': len(wishlist)})
-
-
-@login_required
-def remove_from_wishlist(request, product_id):
-    wishlist = request.session.get('wishlist', [])
-    if product_id in wishlist:
-        wishlist.remove(product_id)
-        request.session['wishlist'] = wishlist
-    return JsonResponse({'status': 'removed', 'count': len(wishlist)})
-
-
-# 3. HISTORIAL DE ÓRDENES DEL USUARIO
-@login_required
-def user_orders(request):
-    orders = Order.objects.filter(customer=request.user).order_by('-created_at')
-    return render(request, 'store/user_orders.html', {'orders': orders})
-
-
-@login_required
-def order_detail(request, order_id):
-    order = get_object_or_404(Order, id=order_id, customer=request.user)
-    items = OrderItem.objects.filter(order=order)
-    return render(request, 'store/order_detail.html', {'order': order, 'items': items})
-
-
-# 4. API PARA CONTAR ITEMS DEL CARRITO
-def cart_count(request):
-    cart = request.session.get('cart', {})
-    total_items = sum(cart.values())
-    return JsonResponse({'count': total_items})
-
-
-# 5. ACTUALIZAR CANTIDAD EN CARRITO
-def update_cart_qty(request, product_id):
-    if request.method == 'POST':
-        cart = _get_cart(request)
-        qty = int(request.POST.get('qty', 1))
-        if qty > 0:
-            cart[str(product_id)] = qty
-        else:
-            cart.pop(str(product_id), None)
-        request.session['cart'] = cart
-        return redirect('cart')
-    return redirect('cart')
-
-
-# 6. DASHBOARD ADMIN MEJORADO
-@user_passes_test(is_admin)
-def admin_dashboard(request):
-    today = timezone.now().date()
-    
-    # Estadísticas generales
-    total_products = Product.objects.count()
-    total_orders = Order.objects.count()
-    total_customers = Order.objects.values('customer').distinct().count()
-    
-    # Ventas del mes
-    month_start = today.replace(day=1)
-    monthly_sales = Order.objects.filter(
-        created_at__gte=month_start
-    ).aggregate(Sum('total'))['total__sum'] or 0
-    
-    # Ventas de hoy
-    daily_sales = Order.objects.filter(
-        created_at__date=today
-    ).aggregate(Sum('total'))['total__sum'] or 0
-    
-    # Productos con poco stock
-    low_stock = Product.objects.filter(stock__lt=10, is_active=True).order_by('stock')[:10]
-    
-    # Últimas órdenes
-    recent_orders = Order.objects.order_by('-created_at')[:10]
-    
-    # Productos más vendidos
-    top_products = OrderItem.objects.values(
-        'product__name'
-    ).annotate(
-        total_qty=Sum('quantity')
-    ).order_by('-total_qty')[:10]
-    
-    context = {
-        'total_products': total_products,
-        'total_orders': total_orders,
-        'total_customers': total_customers,
-        'monthly_sales': monthly_sales,
-        'daily_sales': daily_sales,
-        'low_stock': low_stock,
-        'recent_orders': recent_orders,
-        'top_products': top_products,
-    }
-    
-    return render(request, 'store/admin_dashboard.html', context)
-
-
-# 7. GESTIÓN DE CATEGORÍAS
 @user_passes_test(is_admin)
 def admin_categories(request):
     categories = Category.objects.all()
-    return render(request, 'store/admin_categories.html', {'categories': categories})
+    return render(request, 'store/admin_categories.html', {
+        'categories': categories
+    })
 
 
 @user_passes_test(is_admin)
@@ -388,7 +358,9 @@ def admin_category_edit(request, category_id):
         messages.success(request, 'Categoría actualizada')
         return redirect('admin_categories')
     
-    return render(request, 'store/admin_category_form.html', {'category': category})
+    return render(request, 'store/admin_category_form.html', {
+        'category': category
+    })
 
 
 @user_passes_test(is_admin)
@@ -399,7 +371,10 @@ def admin_category_delete(request, category_id):
     return redirect('admin_categories')
 
 
-# 8. GESTIÓN DE ÓRDENES ADMIN
+# ========================================
+# PANEL DE ADMINISTRACIÓN - ÓRDENES
+# ========================================
+
 @user_passes_test(is_admin)
 def admin_orders(request):
     status_filter = request.GET.get('status', '')
@@ -424,4 +399,28 @@ def admin_order_detail(request, order_id):
         messages.success(request, f'Orden actualizada a {new_status}')
         return redirect('admin_orders')
     
-    return render(request, 'store/admin_order_detail.html', {'order': order, 'items': items})
+    return render(request, 'store/admin_order_detail.html', {
+        'order': order, 
+        'items': items
+    })
+
+
+# ========================================
+# REPORTES
+# ========================================
+
+@user_passes_test(is_admin)
+def reports(request):
+    today = timezone.now().date()
+    orders_today = Order.objects.filter(created_at__date=today)
+    total_today = orders_today.aggregate(Sum('total'))['total__sum'] or 0
+    
+    sold = OrderItem.objects.values('product__name').annotate(
+        total_qty=Sum('quantity')
+    ).order_by('-total_qty')[:10]
+    
+    return render(request, 'store/reports.html', {
+        'orders_today': orders_today,
+        'total_today': total_today,
+        'sold': sold
+    })
