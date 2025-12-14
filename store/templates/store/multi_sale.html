@@ -1,0 +1,499 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .multi-sale-header {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .products-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .category-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .category-section:last-child {
+        border-bottom: none;
+    }
+
+    .category-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .product-item {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+
+    .product-item:hover {
+        background: white;
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .product-item.selected {
+        background: #e7f5e7;
+        border-color: #28a745;
+    }
+
+    .product-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .product-image-small {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    .product-details {
+        flex: 1;
+    }
+
+    .product-name {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: var(--dark-bg);
+        margin-bottom: 0.3rem;
+    }
+
+    .product-price {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .product-stock {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: bold;
+    }
+
+    .qty-btn:hover {
+        background: var(--secondary-color);
+        transform: scale(1.1);
+    }
+
+    .qty-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: scale(1);
+    }
+
+    .qty-input {
+        width: 80px;
+        text-align: center;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 0.5rem;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .summary-panel {
+        position: sticky;
+        top: 100px;
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .summary-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .summary-item-name {
+        font-weight: 600;
+        color: var(--dark-bg);
+    }
+
+    .summary-item-detail {
+        color: #666;
+    }
+
+    .summary-total {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        text-align: center;
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+    }
+
+    .payment-section {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .payment-input {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .payment-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.15);
+    }
+
+    .change-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .change-positive {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .change-negative {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .btn-complete {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 1.2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.2rem;
+        width: 100%;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .btn-complete:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .btn-complete:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .empty-summary {
+        text-align: center;
+        padding: 2rem;
+        color: #999;
+    }
+
+    .empty-summary i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="multi-sale-header">
+    <h1 style="font-weight: bold; margin-bottom: 0.5rem;">
+        <i class="fas fa-shopping-basket"></i> Venta Múltiple
+    </h1>
+    <p class="mb-0 opacity-75">Selecciona varios productos para vender en una sola transacción</p>
+</div>
+
+<form method="POST" id="saleForm">
+    {% csrf_token %}
+    
+    <div class="row">
+        <!-- Lista de Productos -->
+        <div class="col-lg-7">
+            <div class="products-section">
+                <h3 style="font-weight: bold; color: var(--dark-bg); margin-bottom: 2rem;">
+                    <i class="fas fa-boxes"></i> Seleccionar Productos
+                </h3>
+
+                {% for category_name, products in categories_with_products.items %}
+                    <div class="category-section">
+                        <div class="category-title">
+                            <i class="fas fa-tag"></i> {{ category_name }}
+                        </div>
+
+                        {% for product in products %}
+                            <div class="product-item" id="product-{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.stock }}">
+                                <div class="product-info">
+                                    <div>
+                                        {% if product.image_url %}
+                                            <img src="{{ product.image_url }}" class="product-image-small" alt="{{ product.name }}">
+                                        {% else %}
+                                            <img src="https://via.placeholder.com/80/6F4E37/FFFFFF?text={{ product.name|slice:":1" }}" class="product-image-small" alt="{{ product.name }}">
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="product-details">
+                                        <div class="product-name">{{ product.name }}</div>
+                                        <div class="product-price">${{ product.price }} MXN</div>
+                                        <div class="product-stock">
+                                            <i class="fas fa-boxes"></i> {{ product.stock }} disponibles
+                                        </div>
+                                    </div>
+
+                                    <div class="quantity-control">
+                                        <button type="button" class="qty-btn" onclick="decreaseQty({{ product.id }})">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" 
+                                               class="qty-input" 
+                                               id="qty-{{ product.id }}"
+                                               name="quantity_{{ product.id }}" 
+                                               value="0" 
+                                               min="0" 
+                                               max="{{ product.stock }}"
+                                               onchange="updateSummary()">
+                                        <button type="button" class="qty-btn" onclick="increaseQty({{ product.id }})">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Panel de Resumen -->
+        <div class="col-lg-5">
+            <div class="summary-panel">
+                <div class="summary-title">
+                    <i class="fas fa-receipt"></i> Resumen de Venta
+                </div>
+
+                <div id="summary-items">
+                    <div class="empty-summary">
+                        <i class="fas fa-shopping-basket"></i>
+                        <p>No has seleccionado productos</p>
+                    </div>
+                </div>
+
+                <div class="summary-total">
+                    TOTAL: <span id="total-amount">$0.00 MXN</span>
+                </div>
+
+                <div class="payment-section">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-money-bill-wave"></i> Pago Recibido
+                    </label>
+                    <input type="number" 
+                           class="form-control payment-input" 
+                           name="payment_received" 
+                           id="payment_received"
+                           step="0.01" 
+                           min="0" 
+                           placeholder="0.00"
+                           onchange="calculateChange()">
+
+                    <div id="change-display" style="display: none;"></div>
+
+                    <button type="submit" class="btn-complete" id="btn-submit" disabled>
+                        <i class="fas fa-check-circle"></i> Completar Venta
+                    </button>
+                </div>
+
+                <div class="text-center mt-3">
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    let selectedProducts = {};
+    let totalAmount = 0;
+
+    function updateProductAppearance(productId) {
+        const productItem = document.getElementById(`product-${productId}`);
+        const qty = parseInt(document.getElementById(`qty-${productId}`).value) || 0;
+        
+        if (qty > 0) {
+            productItem.classList.add('selected');
+        } else {
+            productItem.classList.remove('selected');
+        }
+    }
+
+    function decreaseQty(productId) {
+        const input = document.getElementById(`qty-${productId}`);
+        let value = parseInt(input.value) || 0;
+        if (value > 0) {
+            input.value = value - 1;
+            updateProductAppearance(productId);
+            updateSummary();
+        }
+    }
+
+    function increaseQty(productId) {
+        const input = document.getElementById(`qty-${productId}`);
+        const max = parseInt(input.max);
+        let value = parseInt(input.value) || 0;
+        if (value < max) {
+            input.value = value + 1;
+            updateProductAppearance(productId);
+            updateSummary();
+        }
+    }
+
+    function updateSummary() {
+        selectedProducts = {};
+        totalAmount = 0;
+        const summaryItems = document.getElementById('summary-items');
+        
+        // Obtener todos los productos con cantidad > 0
+        {% for products_list in categories_with_products.values %}
+            {% for product in products_list %}
+                const qty{{ product.id }} = parseInt(document.getElementById('qty-{{ product.id }}').value) || 0;
+                if (qty{{ product.id }} > 0) {
+                    const price{{ product.id }} = parseFloat({{ product.price }});
+                    const subtotal{{ product.id }} = price{{ product.id }} * qty{{ product.id }};
+                    selectedProducts[{{ product.id }}] = {
+                        name: '{{ product.name|escapejs }}',
+                        qty: qty{{ product.id }},
+                        price: price{{ product.id }},
+                        subtotal: subtotal{{ product.id }}
+                    };
+                    totalAmount += subtotal{{ product.id }};
+                }
+                updateProductAppearance({{ product.id }});
+            {% endfor %}
+        {% endfor %}
+
+        // Actualizar display
+        if (Object.keys(selectedProducts).length === 0) {
+            summaryItems.innerHTML = `
+                <div class="empty-summary">
+                    <i class="fas fa-shopping-basket"></i>
+                    <p>No has seleccionado productos</p>
+                </div>
+            `;
+        } else {
+            let html = '';
+            for (let id in selectedProducts) {
+                const item = selectedProducts[id];
+                html += `
+                    <div class="summary-item">
+                        <div>
+                            <div class="summary-item-name">${item.name}</div>
+                            <div class="summary-item-detail">${item.qty} x $${item.price.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <strong style="color: var(--primary-color);">$${item.subtotal.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                `;
+            }
+            summaryItems.innerHTML = html;
+        }
+
+        document.getElementById('total-amount').textContent = `$${totalAmount.toFixed(2)} MXN`;
+        calculateChange();
+    }
+
+    function calculateChange() {
+        const payment = parseFloat(document.getElementById('payment_received').value) || 0;
+        const changeDisplay = document.getElementById('change-display');
+        const btnSubmit = document.getElementById('btn-submit');
+        
+        if (Object.keys(selectedProducts).length === 0) {
+            changeDisplay.style.display = 'none';
+            btnSubmit.disabled = true;
+            return;
+        }
+
+        if (payment > 0) {
+            const change = payment - totalAmount;
+            changeDisplay.style.display = 'block';
+            
+            if (change >= 0) {
+                changeDisplay.className = 'change-display change-positive';
+                changeDisplay.innerHTML = `<i class="fas fa-check-circle"></i> CAMBIO: $${change.toFixed(2)} MXN`;
+                btnSubmit.disabled = false;
+            } else {
+                changeDisplay.className = 'change-display change-negative';
+                changeDisplay.innerHTML = `<i class="fas fa-exclamation-triangle"></i> FALTA: $${Math.abs(change).toFixed(2)} MXN`;
+                btnSubmit.disabled = true;
+            }
+        } else {
+            changeDisplay.style.display = 'none';
+            btnSubmit.disabled = true;
+        }
+    }
+
+    // Inicializar
+    updateSummary();
+</script>
+
+{% endblock %}

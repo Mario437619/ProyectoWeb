@@ -424,3 +424,104 @@ def reports(request):
         'total_today': total_today,
         'sold': sold
     })
+# ========================================
+# AGREGAR ESTAS FUNCIONES A views.py
+# ========================================
+
+@login_required
+def multi_sale(request):
+    """Vista para venta de múltiples productos"""
+    products = Product.objects.filter(is_active=True, stock__gt=0)
+    
+    if request.method == 'POST':
+        # Obtener productos seleccionados
+        selected_products = []
+        total = 0
+        
+        for product in products:
+            quantity_key = f'quantity_{product.id}'
+            quantity = int(request.POST.get(quantity_key, 0))
+            
+            if quantity > 0:
+                if quantity > product.stock:
+                    messages.error(request, f'{product.name}: Solo hay {product.stock} unidades disponibles')
+                    return redirect('multi_sale')
+                
+                subtotal = float(product.price) * quantity
+                selected_products.append({
+                    'product': product,
+                    'quantity': quantity,
+                    'subtotal': subtotal
+                })
+                total += subtotal
+        
+        if not selected_products:
+            messages.error(request, 'Debes seleccionar al menos un producto')
+            return redirect('multi_sale')
+        
+        # Obtener pago recibido
+        payment_received = float(request.POST.get('payment_received', 0))
+        
+        if payment_received < total:
+            messages.error(request, 'El pago recibido es insuficiente')
+            return redirect('multi_sale')
+        
+        change = payment_received - total
+        
+        # Crear orden
+        now = timezone.now()
+        order_number = f"ORD-{int(time.time()*1000)}-{random.randint(100,999)}"
+        
+        order = Order.objects.create(
+            order_number=order_number,
+            customer=request.user,
+            total=total,
+            status='completed',
+            payment_method='cash',
+            payment_status='paid',
+            created_at=now,
+            updated_at=now
+        )
+        
+        # Crear items y actualizar stock
+        for item in selected_products:
+            product = item['product']
+            quantity = item['quantity']
+            subtotal = item['subtotal']
+            
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                quantity=quantity,
+                unit_price=product.price,
+                subtotal=subtotal,
+                created_at=now
+            )
+            
+            # Actualizar stock
+            product.stock -= quantity
+            product.save()
+            
+            # Log de inventario
+            InventoryLog.objects.create(
+                product=product,
+                quantity_change=-quantity,
+                reason='Venta múltiple',
+                created_at=now
+            )
+        
+        messages.success(request, f'¡Venta completada! Cambio: ${change:.2f} MXN')
+        return redirect('sale_receipt', order_id=order.id)
+    
+    # Agrupar productos por categoría
+    categories_with_products = {}
+    for product in products:
+        category_name = product.category.name
+        if category_name not in categories_with_products:
+            categories_with_products[category_name] = []
+        categories_with_products[category_name].append(product)
+    
+    return render(request, 'store/multi_sale.html', {
+        'categories_with_products': categories_with_products,
+        'all_products': products
+    })
