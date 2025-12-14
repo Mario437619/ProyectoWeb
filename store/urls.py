@@ -1,5 +1,4 @@
-# store/urls.py - Rutas de la aplicación
-
+# urls.py - COMPLETO Y ACTUALIZADO
 from django.urls import path
 from . import views
 
@@ -17,16 +16,21 @@ urlpatterns = [
     path('category/<int:category_id>/', views.products_by_category, name='products_by_category'),
     path('product/<int:product_id>/', views.product_detail, name='product_detail'),
     
-    # VENTA RÁPIDA (sin carrito)
-    path('sale/<int:product_id>/', views.quick_sale, name='quick_sale'),
+    # PUNTO DE VENTA (VENTA MÚLTIPLE)
     path('sale/multiple/', views.multi_sale, name='multi_sale'),
     path('receipt/<int:order_id>/', views.sale_receipt, name='sale_receipt'),
+    # PUNTO DE VENTA
+path('sale/multiple/', views.multi_sale, name='multi_sale'),
+path('sale/add/<int:product_id>/', views.add_to_sale, name='add_to_sale'),
+path('sale/remove/<int:product_id>/', views.remove_from_sale, name='remove_from_sale'),
+path('sale/clear/', views.clear_sale, name='clear_sale'),
+path('receipt/<int:order_id>/', views.sale_receipt, name='sale_receipt'),
     
     # Órdenes de usuario
     path('my-orders/', views.user_orders, name='user_orders'),
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
     
-    # PANEL PERSONALIZADO (cambiar de /admin/ a /panel/)
+    # Panel - Dashboard
     path('panel/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     
     # Panel - Productos

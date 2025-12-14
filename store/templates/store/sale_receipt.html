@@ -1,4 +1,5 @@
 {% extends 'store/base.html' %}
+{% load receipt_extras %}
 
 {% block content %}
 <style>
@@ -95,6 +96,21 @@
         border-top: 2px solid var(--primary-color);
     }
 
+    .payment-row {
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px dashed #ccc;
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .change-row {
+        font-size: 1.5rem;
+        color: #28a745;
+        font-weight: bold;
+    }
+
     .receipt-footer {
         text-align: center;
         color: #666;
@@ -140,13 +156,17 @@
     }
 
     @media print {
-        .action-buttons, .navbar, .footer {
+        .action-buttons, .navbar-custom, .footer, .success-badge {
             display: none !important;
+        }
+        
+        body {
+            background: white;
         }
         
         .receipt {
             box-shadow: none;
-            border: none;
+            border: 2px dashed #000;
         }
     }
 </style>
@@ -165,6 +185,7 @@
             <div class="store-name">CafeITO</div>
             <p class="mb-0">Tu Panadería y Cafetería Favorita</p>
             <p class="mb-0 small text-muted">Ciudad de México, México</p>
+            <p class="mb-0 small text-muted">Tel: +52 55 1234 5678</p>
         </div>
 
         <div class="receipt-info">
@@ -177,8 +198,12 @@
                 <span>{{ order.created_at|date:"d/m/Y H:i" }}</span>
             </div>
             <div class="info-row">
-                <strong>Vendedor:</strong>
+                <strong>Atendió:</strong>
                 <span>{{ order.customer.username }}</span>
+            </div>
+            <div class="info-row">
+                <strong>Método de Pago:</strong>
+                <span>Efectivo</span>
             </div>
         </div>
 
@@ -199,15 +224,28 @@
                 <span>${{ order.total }} MXN</span>
             </div>
             <div class="total-row final">
-                <span>TOTAL:</span>
+                <span>TOTAL A PAGAR:</span>
                 <span>${{ order.total }} MXN</span>
             </div>
+            
+            {% if order.notes %}
+                <div class="total-row payment-row">
+                    <span>Pago Recibido:</span>
+                    <span>${{ order.notes|extract_payment }} MXN</span>
+                </div>
+                
+                <div class="total-row change-row">
+                    <span>CAMBIO:</span>
+                    <span>${{ order.notes|extract_change }} MXN</span>
+                </div>
+            {% endif %}
         </div>
 
         <div class="receipt-footer">
-            <p class="mb-2">¡Gracias por su compra!</p>
+            <p class="mb-2"><strong>¡Gracias por su compra!</strong></p>
             <p class="mb-0 small">Este ticket es su comprobante de compra</p>
             <p class="mb-0 small">Conserve su ticket</p>
+            <p class="mb-0 small mt-2">www.cafeito.com</p>
         </div>
     </div>
 
@@ -215,8 +253,11 @@
         <button onclick="window.print()" class="btn-print">
             <i class="fas fa-print"></i> Imprimir Ticket
         </button>
-        <a href="{% url 'home' %}" class="btn btn-outline-secondary" style="flex: 1; text-align: center; padding: 0.8rem;">
-            <i class="fas fa-home"></i> Volver al Inicio
+        <a href="{% url 'multi_sale' %}" class="btn btn-success" style="flex: 1; text-align: center; padding: 0.8rem; text-decoration: none;">
+            <i class="fas fa-shopping-basket"></i> Nueva Venta
+        </a>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary" style="flex: 1; text-align: center; padding: 0.8rem; text-decoration: none;">
+            <i class="fas fa-home"></i> Inicio
         </a>
     </div>
 </div>

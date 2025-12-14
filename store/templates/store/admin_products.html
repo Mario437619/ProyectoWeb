@@ -1,22 +1,372 @@
 {% extends 'store/base.html' %}
+
 {% block content %}
-  <h2>Productos (Admin)</h2>
-  <a class="btn btn-success mb-2" href="{% url 'admin_product_create' %}">Crear producto</a>
-  <table class="table">
-    <thead><tr><th>ID</th><th>Nombre</th><th>Stock</th><th>Precio</th><th></th></tr></thead>
-    <tbody>
-      {% for p in products %}
-      <tr>
-        <td>{{ p.id }}</td>
-        <td>{{ p.name }}</td>
-        <td>{{ p.stock }}</td>
-        <td>${{ p.price }}</td>
-        <td>
-          <a class="btn btn-sm btn-primary" href="{% url 'admin_product_edit' p.id %}">Editar</a>
-          <a class="btn btn-sm btn-danger" href="{% url 'admin_product_delete' p.id %}">Eliminar</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<style>
+    .products-header {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-create-product {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-create-product:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        color: white;
+    }
+
+    .filter-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .product-card-admin {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        position: relative;
+    }
+
+    .product-card-admin:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .product-image-admin {
+        height: 200px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .product-image-admin img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-badge-admin {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: var(--primary-color);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .stock-badge {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .stock-high {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .stock-medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .stock-low {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .product-info-admin {
+        padding: 1.5rem;
+    }
+
+    .product-category-admin {
+        color: var(--secondary-color);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-name-admin {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 0.5rem;
+        min-height: 2.5rem;
+    }
+
+    .product-price-admin {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .product-actions-admin {
+        display: flex;
+        gap: 0.5rem;
+        padding-top: 1rem;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: 0.6rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-edit {
+        background: #007bff;
+        color: white;
+        border: none;
+    }
+
+    .btn-edit:hover {
+        background: #0056b3;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+        border: none;
+    }
+
+    .btn-delete:hover {
+        background: #c82333;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-mini {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+
+    .stat-value-mini {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .stat-label-mini {
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+</style>
+
+<div class="products-header">
+    <div class="header-content">
+        <div>
+            <h1 style="font-weight: bold; margin-bottom: 0.5rem;">
+                <i class="fas fa-boxes"></i> Gestión de Productos
+            </h1>
+            <p class="mb-0 opacity-75">Administra tu inventario de productos</p>
+        </div>
+        <a href="{% url 'admin_product_create' %}" class="btn-create-product">
+            <i class="fas fa-plus-circle"></i> Nuevo Producto
+        </a>
+    </div>
+</div>
+
+<!-- Estadísticas Rápidas -->
+<div class="stats-row">
+    <div class="stat-card-mini">
+        <div class="stat-value-mini">{{ products|length }}</div>
+        <div class="stat-label-mini">Total Productos</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-value-mini" style="color: #28a745;">
+            {{ products|length }}
+        </div>
+        <div class="stat-label-mini">Activos</div>
+    </div>
+    <div class="stat-card-mini">
+        <div class="stat-value-mini" style="color: #dc3545;">
+            {% for p in products %}{% if p.stock < 10 %}1{% endif %}{% endfor %}
+        </div>
+        <div class="stat-label-mini">Stock Bajo</div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="filter-section">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <input type="text" class="form-control" id="searchInput" placeholder="Buscar producto..." onkeyup="filterProducts()">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="categoryFilter" onchange="filterProducts()">
+                <option value="">Todas las categorías</option>
+                {% for p in products %}
+                    <option value="{{ p.category.name }}">{{ p.category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="stockFilter" onchange="filterProducts()">
+                <option value="">Todo el stock</option>
+                <option value="high">Stock alto (&gt;20)</option>
+                <option value="medium">Stock medio (10-20)</option>
+                <option value="low">Stock bajo (&lt;10)</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Grid de Productos -->
+<div class="product-grid">
+    {% for p in products %}
+        <div class="product-card-admin" data-name="{{ p.name|lower }}" data-category="{{ p.category.name }}" data-stock="{{ p.stock }}">
+            <div class="product-image-admin">
+                {% if p.image_url %}
+                    <img src="{{ p.image_url }}" alt="{{ p.name }}">
+                {% else %}
+                    <img src="https://via.placeholder.com/280x200/6F4E37/FFFFFF?text={{ p.name|slice:':1' }}" alt="{{ p.name }}">
+                {% endif %}
+                
+                <div class="product-badge-admin">ID: {{ p.id }}</div>
+                
+                {% if p.stock > 20 %}
+                    <div class="stock-badge stock-high">
+                        <i class="fas fa-check-circle"></i> {{ p.stock }} unidades
+                    </div>
+                {% elif p.stock >= 10 %}
+                    <div class="stock-badge stock-medium">
+                        <i class="fas fa-exclamation-circle"></i> {{ p.stock }} unidades
+                    </div>
+                {% else %}
+                    <div class="stock-badge stock-low">
+                        <i class="fas fa-exclamation-triangle"></i> {{ p.stock }} unidades
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="product-info-admin">
+                <div class="product-category-admin">
+                    <i class="fas fa-tag"></i> {{ p.category.name }}
+                </div>
+                <div class="product-name-admin">{{ p.name }}</div>
+                <div class="product-price-admin">${{ p.price }} MXN</div>
+
+                <div class="product-actions-admin">
+                    <a href="{% url 'admin_product_edit' p.id %}" class="btn-action btn-edit">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{% url 'admin_product_delete' p.id %}" 
+                       class="btn-action btn-delete" 
+                       onclick="return confirm('¿Eliminar {{ p.name }}?')">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-box-open" style="font-size: 5rem; color: #ccc;"></i>
+            <h3 class="mt-3">No hay productos</h3>
+            <p class="text-muted">Crea tu primer producto</p>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    function filterProducts() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const categoryValue = document.getElementById('categoryFilter').value;
+        const stockValue = document.getElementById('stockFilter').value;
+        
+        const cards = document.querySelectorAll('.product-card-admin');
+        
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const category = card.getAttribute('data-category');
+            const stock = parseInt(card.getAttribute('data-stock'));
+            
+            let showCard = true;
+            
+            // Filtro de búsqueda
+            if (searchValue && !name.includes(searchValue)) {
+                showCard = false;
+            }
+            
+            // Filtro de categoría
+            if (categoryValue && category !== categoryValue) {
+                showCard = false;
+            }
+            
+            // Filtro de stock
+            if (stockValue) {
+                if (stockValue === 'high' && stock <= 20) showCard = false;
+                if (stockValue === 'medium' && (stock < 10 || stock > 20)) showCard = false;
+                if (stockValue === 'low' && stock >= 10) showCard = false;
+            }
+            
+            card.style.display = showCard ? 'block' : 'none';
+        });
+    }
+</script>
+
 {% endblock %}

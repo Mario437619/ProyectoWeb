@@ -1,5 +1,4 @@
 # views.py - CÓDIGO COMPLETO PARA CAFEITO
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -10,50 +9,41 @@ from django.db.models import Q, Sum
 from django.http import JsonResponse
 import time
 import random
-
 from .models import Category, Product, Order, OrderItem, InventoryLog
 from .forms import RegisterForm, ProductForm
 
-
-# ========================================
+# ======================================== 
 # FUNCIONES DE UTILIDAD
-# ========================================
-
+# ======================================== 
 def is_admin(user):
     return user.is_staff
 
-
-# ========================================
+# ======================================== 
 # VISTAS PÚBLICAS
-# ========================================
-
+# ======================================== 
 def home(request):
     categories = Category.objects.filter(is_active=True)
     products = Product.objects.filter(is_active=True)[:20]
     return render(request, 'store/home.html', {
-        'categories': categories, 
+        'categories': categories,
         'products': products
     })
-
 
 def products_by_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
     products = Product.objects.filter(category=category, is_active=True)
     return render(request, 'store/category_products.html', {
-        'category': category, 
+        'category': category,
         'products': products
     })
-
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     return render(request, 'store/product_detail.html', {'product': product})
 
-
-# ========================================
+# ======================================== 
 # AUTENTICACIÓN
-# ========================================
-
+# ======================================== 
 def user_register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -64,7 +54,6 @@ def user_register(request):
     else:
         form = RegisterForm()
     return render(request, 'store/register.html', {'form': form})
-
 
 def user_login(request):
     if request.method == 'POST':
@@ -77,60 +66,128 @@ def user_login(request):
         form = AuthenticationForm()
     return render(request, 'store/login.html', {'form': form})
 
-
 def user_logout(request):
     auth_logout(request)
     return redirect('login')
 
-
-# ========================================
+# ======================================== 
 # BÚSQUEDA DE PRODUCTOS
-# ========================================
-
+# ======================================== 
 def search_products(request):
     query = request.GET.get('q', '')
     products = Product.objects.filter(is_active=True)
-    
     if query:
         products = products.filter(
             Q(name__icontains=query) | 
-            Q(description__icontains=query) |
+            Q(description__icontains=query) | 
             Q(category__name__icontains=query)
         )
-    
     return render(request, 'store/search_results.html', {
-        'products': products, 
+        'products': products,
         'query': query
     })
 
+# ======================================== 
+# SISTEMA DE PUNTO DE VENTA CON SESIÓN
+# ======================================== 
 
-# ========================================
-# SISTEMA DE VENTA RÁPIDA (SIN CARRITO)
-# ========================================
+def get_sale_session(request):
+    """Obtiene los productos en la sesión de venta"""
+    return request.session.get('sale_items', {})
+
+def save_sale_session(request, sale_items):
+    """Guarda los productos en la sesión de venta"""
+    request.session['sale_items'] = sale_items
+    request.session.modified = True
 
 @login_required
-def quick_sale(request, product_id):
-    """Vista para venta rápida de un producto"""
+def add_to_sale(request, product_id):
+    """Agregar producto a la venta en sesión"""
     product = get_object_or_404(Product, id=product_id)
     
+    # Obtener items de la sesión
+    sale_items = get_sale_session(request)
+    
+    # Agregar o incrementar cantidad
+    product_id_str = str(product_id)
+    if product_id_str in sale_items:
+        sale_items[product_id_str] += 1
+    else:
+        sale_items[product_id_str] = 1
+    
+    # Validar stock
+    if sale_items[product_id_str] > product.stock:
+        sale_items[product_id_str] = product.stock
+        messages.warning(request, f'Solo hay {product.stock} unidades disponibles')
+    else:
+        messages.success(request, f'{product.name} agregado al resumen de venta')
+    
+    # Guardar en sesión
+    save_sale_session(request, sale_items)
+    
+    # Redirigir a venta múltiple
+    return redirect('multi_sale')
+
+@login_required
+def multi_sale(request):
+    """Pantalla principal del punto de venta"""
+    
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
+        # Obtener items de la sesión
+        sale_items = get_sale_session(request)
+        
+        # También procesar cantidades del formulario (por si se modificaron)
+        for key, value in request.POST.items():
+            if key.startswith('quantity_'):
+                product_id = key.replace('quantity_', '')
+                quantity = int(value) if value else 0
+                
+                if quantity > 0:
+                    sale_items[product_id] = quantity
+                elif product_id in sale_items:
+                    del sale_items[product_id]
+        
+        # Guardar cambios en sesión
+        save_sale_session(request, sale_items)
+        
+        # Procesar la venta
         payment_received = float(request.POST.get('payment_received', 0))
         
-        # Calcular totales
-        subtotal = float(product.price) * quantity
-        total = subtotal
-        change = payment_received - total
+        # Calcular items y total
+        items = []
+        total = 0
         
-        # Validar stock
-        if quantity > product.stock:
-            messages.error(request, f'Solo hay {product.stock} unidades disponibles')
-            return redirect('quick_sale', product_id=product_id)
+        for product_id_str, quantity in sale_items.items():
+            try:
+                product = Product.objects.get(id=int(product_id_str))
+                
+                # Validar stock
+                if quantity > product.stock:
+                    messages.error(request, f'Solo hay {product.stock} unidades de {product.name}')
+                    return redirect('multi_sale')
+                
+                subtotal = float(product.price) * quantity
+                total += subtotal
+                
+                items.append({
+                    'product': product,
+                    'quantity': quantity,
+                    'subtotal': subtotal
+                })
+            except Product.DoesNotExist:
+                continue
+        
+        if not items:
+            messages.error(request, 'No hay productos en la venta')
+            return redirect('multi_sale')
         
         # Validar pago
         if payment_received < total:
             messages.error(request, 'El pago recibido es insuficiente')
-            return redirect('quick_sale', product_id=product_id)
+            return redirect('multi_sale')
+        
+        # Calcular cambio
+        change = payment_received - total
         
         # Crear orden
         now = timezone.now()
@@ -143,37 +200,89 @@ def quick_sale(request, product_id):
             status='completed',
             payment_method='cash',
             payment_status='completed',
+            notes=f'Pago: ${payment_received:.2f} | Cambio: ${change:.2f}',
             created_at=now,
             updated_at=now
         )
         
-        # Crear item de orden
-        OrderItem.objects.create(
-            order=order,
-            product=product,
-            quantity=quantity,
-            unit_price=product.price,
-            subtotal=subtotal,
-            created_at=now
-        )
+        # Crear items y actualizar stock
+        for item in items:
+            OrderItem.objects.create(
+                order=order,
+                product=item['product'],
+                quantity=item['quantity'],
+                unit_price=item['product'].price,
+                subtotal=item['subtotal'],
+                created_at=now
+            )
+            
+            # Actualizar stock
+            item['product'].stock -= item['quantity']
+            item['product'].save()
+            
+            # Log de inventario
+            InventoryLog.objects.create(
+                product=item['product'],
+                quantity_change=-item['quantity'],
+                reason='Venta en punto de venta',
+                created_at=now
+            )
         
-        # Actualizar stock
-        product.stock -= quantity
-        product.save()
-        
-        # Log de inventario
-        InventoryLog.objects.create(
-            product=product,
-            quantity_change=-quantity,
-            reason='Venta directa',
-            created_at=now
-        )
+        # Limpiar sesión
+        request.session['sale_items'] = {}
+        request.session.modified = True
         
         messages.success(request, f'¡Venta completada! Cambio: ${change:.2f} MXN')
         return redirect('sale_receipt', order_id=order.id)
     
-    return render(request, 'store/quick_sale.html', {'product': product})
+    # Mostrar formulario de venta con productos en sesión
+    sale_items = get_sale_session(request)
+    
+    categories = Category.objects.filter(is_active=True)
+    categories_with_products = {}
+    
+    for category in categories:
+        products_list = []
+        products = Product.objects.filter(category=category, is_active=True, stock__gt=0)
+        
+        for product in products:
+            product_dict = {
+                'id': product.id,
+                'name': product.name,
+                'price': product.price,
+                'stock': product.stock,
+                'image_url': product.image_url,
+                'quantity': sale_items.get(str(product.id), 0)
+            }
+            products_list.append(product_dict)
+        
+        if products_list:
+            categories_with_products[category.name] = products_list
+    
+    return render(request, 'store/multi_sale.html', {
+        'categories_with_products': categories_with_products
+    })
 
+@login_required
+def remove_from_sale(request, product_id):
+    """Eliminar producto de la venta"""
+    sale_items = get_sale_session(request)
+    product = get_object_or_404(Product, id=product_id)
+    
+    if str(product_id) in sale_items:
+        del sale_items[str(product_id)]
+        save_sale_session(request, sale_items)
+        messages.info(request, f'{product.name} eliminado de la venta')
+    
+    return redirect('multi_sale')
+
+@login_required
+def clear_sale(request):
+    """Limpiar toda la venta"""
+    request.session['sale_items'] = {}
+    request.session.modified = True
+    messages.info(request, 'Venta cancelada')
+    return redirect('home')
 
 @login_required
 def sale_receipt(request, order_id):
@@ -181,35 +290,30 @@ def sale_receipt(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     items = OrderItem.objects.filter(order=order)
     return render(request, 'store/sale_receipt.html', {
-        'order': order, 
+        'order': order,
         'items': items
     })
 
-
-# ========================================
+# ======================================== 
 # HISTORIAL DE ÓRDENES DEL USUARIO
-# ========================================
-
+# ======================================== 
 @login_required
 def user_orders(request):
     orders = Order.objects.filter(customer=request.user).order_by('-created_at')
     return render(request, 'store/user_orders.html', {'orders': orders})
-
 
 @login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, customer=request.user)
     items = OrderItem.objects.filter(order=order)
     return render(request, 'store/order_detail.html', {
-        'order': order, 
+        'order': order,
         'items': items
     })
 
-
-# ========================================
+# ======================================== 
 # PANEL DE ADMINISTRACIÓN - DASHBOARD
-# ========================================
-
+# ======================================== 
 @user_passes_test(is_admin)
 def admin_dashboard(request):
     today = timezone.now().date()
@@ -259,16 +363,13 @@ def admin_dashboard(request):
     
     return render(request, 'store/admin_dashboard.html', context)
 
-
-# ========================================
+# ======================================== 
 # PANEL DE ADMINISTRACIÓN - PRODUCTOS
-# ========================================
-
+# ======================================== 
 @user_passes_test(is_admin)
 def admin_products(request):
     products = Product.objects.all()
     return render(request, 'store/admin_products.html', {'products': products})
-
 
 @user_passes_test(is_admin)
 def admin_product_create(request):
@@ -286,7 +387,6 @@ def admin_product_create(request):
         form = ProductForm()
     return render(request, 'store/admin_product_form.html', {'form': form})
 
-
 @user_passes_test(is_admin)
 def admin_product_edit(request, product_id):
     p = get_object_or_404(Product, id=product_id)
@@ -302,7 +402,6 @@ def admin_product_edit(request, product_id):
         form = ProductForm(instance=p)
     return render(request, 'store/admin_product_form.html', {'form': form})
 
-
 @user_passes_test(is_admin)
 def admin_product_delete(request, product_id):
     p = get_object_or_404(Product, id=product_id)
@@ -310,18 +409,15 @@ def admin_product_delete(request, product_id):
     messages.success(request, 'Producto eliminado')
     return redirect('admin_products')
 
-
-# ========================================
+# ======================================== 
 # PANEL DE ADMINISTRACIÓN - CATEGORÍAS
-# ========================================
-
+# ======================================== 
 @user_passes_test(is_admin)
 def admin_categories(request):
     categories = Category.objects.all()
     return render(request, 'store/admin_categories.html', {
         'categories': categories
     })
-
 
 @user_passes_test(is_admin)
 def admin_category_create(request):
@@ -330,7 +426,6 @@ def admin_category_create(request):
         description = request.POST.get('description')
         image_url = request.POST.get('image_url')
         now = timezone.now()
-        
         Category.objects.create(
             name=name,
             description=description,
@@ -341,14 +436,11 @@ def admin_category_create(request):
         )
         messages.success(request, 'Categoría creada exitosamente')
         return redirect('admin_categories')
-    
     return render(request, 'store/admin_category_form.html')
-
 
 @user_passes_test(is_admin)
 def admin_category_edit(request, category_id):
     category = get_object_or_404(Category, id=category_id)
-    
     if request.method == 'POST':
         category.name = request.POST.get('name')
         category.description = request.POST.get('description')
@@ -357,11 +449,9 @@ def admin_category_edit(request, category_id):
         category.save()
         messages.success(request, 'Categoría actualizada')
         return redirect('admin_categories')
-    
     return render(request, 'store/admin_category_form.html', {
         'category': category
     })
-
 
 @user_passes_test(is_admin)
 def admin_category_delete(request, category_id):
@@ -370,27 +460,21 @@ def admin_category_delete(request, category_id):
     messages.success(request, 'Categoría eliminada')
     return redirect('admin_categories')
 
-
-# ========================================
+# ======================================== 
 # PANEL DE ADMINISTRACIÓN - ÓRDENES
-# ========================================
-
+# ======================================== 
 @user_passes_test(is_admin)
 def admin_orders(request):
     status_filter = request.GET.get('status', '')
     orders = Order.objects.all().order_by('-created_at')
-    
     if status_filter:
         orders = orders.filter(status=status_filter)
-    
     return render(request, 'store/admin_orders.html', {'orders': orders})
-
 
 @user_passes_test(is_admin)
 def admin_order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     items = OrderItem.objects.filter(order=order)
-    
     if request.method == 'POST':
         new_status = request.POST.get('status')
         order.status = new_status
@@ -398,130 +482,24 @@ def admin_order_detail(request, order_id):
         order.save()
         messages.success(request, f'Orden actualizada a {new_status}')
         return redirect('admin_orders')
-    
     return render(request, 'store/admin_order_detail.html', {
-        'order': order, 
+        'order': order,
         'items': items
     })
 
-
-# ========================================
+# ======================================== 
 # REPORTES
-# ========================================
-
+# ======================================== 
 @user_passes_test(is_admin)
 def reports(request):
     today = timezone.now().date()
     orders_today = Order.objects.filter(created_at__date=today)
     total_today = orders_today.aggregate(Sum('total'))['total__sum'] or 0
-    
     sold = OrderItem.objects.values('product__name').annotate(
         total_qty=Sum('quantity')
     ).order_by('-total_qty')[:10]
-    
     return render(request, 'store/reports.html', {
         'orders_today': orders_today,
         'total_today': total_today,
         'sold': sold
-    })
-# ========================================
-# AGREGAR ESTAS FUNCIONES A views.py
-# ========================================
-
-@login_required
-def multi_sale(request):
-    """Vista para venta de múltiples productos"""
-    products = Product.objects.filter(is_active=True, stock__gt=0)
-    
-    if request.method == 'POST':
-        # Obtener productos seleccionados
-        selected_products = []
-        total = 0
-        
-        for product in products:
-            quantity_key = f'quantity_{product.id}'
-            quantity = int(request.POST.get(quantity_key, 0))
-            
-            if quantity > 0:
-                if quantity > product.stock:
-                    messages.error(request, f'{product.name}: Solo hay {product.stock} unidades disponibles')
-                    return redirect('multi_sale')
-                
-                subtotal = float(product.price) * quantity
-                selected_products.append({
-                    'product': product,
-                    'quantity': quantity,
-                    'subtotal': subtotal
-                })
-                total += subtotal
-        
-        if not selected_products:
-            messages.error(request, 'Debes seleccionar al menos un producto')
-            return redirect('multi_sale')
-        
-        # Obtener pago recibido
-        payment_received = float(request.POST.get('payment_received', 0))
-        
-        if payment_received < total:
-            messages.error(request, 'El pago recibido es insuficiente')
-            return redirect('multi_sale')
-        
-        change = payment_received - total
-        
-        # Crear orden
-        now = timezone.now()
-        order_number = f"ORD-{int(time.time()*1000)}-{random.randint(100,999)}"
-        
-        order = Order.objects.create(
-            order_number=order_number,
-            customer=request.user,
-            total=total,
-            status='completed',
-            payment_method='cash',
-            payment_status='completed',
-            created_at=now,
-            updated_at=now
-        )
-        
-        # Crear items y actualizar stock
-        for item in selected_products:
-            product = item['product']
-            quantity = item['quantity']
-            subtotal = item['subtotal']
-            
-            OrderItem.objects.create(
-                order=order,
-                product=product,
-                quantity=quantity,
-                unit_price=product.price,
-                subtotal=subtotal,
-                created_at=now
-            )
-            
-            # Actualizar stock
-            product.stock -= quantity
-            product.save()
-            
-            # Log de inventario
-            InventoryLog.objects.create(
-                product=product,
-                quantity_change=-quantity,
-                reason='Venta múltiple',
-                created_at=now
-            )
-        
-        messages.success(request, f'¡Venta completada! Cambio: ${change:.2f} MXN')
-        return redirect('sale_receipt', order_id=order.id)
-    
-    # Agrupar productos por categoría
-    categories_with_products = {}
-    for product in products:
-        category_name = product.category.name
-        if category_name not in categories_with_products:
-            categories_with_products[category_name] = []
-        categories_with_products[category_name].append(product)
-    
-    return render(request, 'store/multi_sale.html', {
-        'categories_with_products': categories_with_products,
-        'all_products': products
     })

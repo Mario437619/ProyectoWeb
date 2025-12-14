@@ -8,11 +8,11 @@ class Category(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
-
+    
     class Meta:
         db_table = 'categories'
         ordering = ['name']
-
+    
     def __str__(self):
         return self.name
 
@@ -27,10 +27,10 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
-
+    
     class Meta:
         db_table = 'products'
-
+    
     def __str__(self):
         return self.name
 
@@ -44,13 +44,15 @@ class Order(models.Model):
     status = models.CharField(max_length=20)
     payment_method = models.CharField(max_length=20)
     payment_status = models.CharField(max_length=20)
+    payment_received = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    change_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
-
+    
     class Meta:
         db_table = 'orders'
-
+    
     def __str__(self):
         return self.order_number
 
@@ -61,7 +63,7 @@ class OrderItem(models.Model):
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField()
-
+    
     class Meta:
         db_table = 'order_items'
 
@@ -70,6 +72,6 @@ class InventoryLog(models.Model):
     quantity_change = models.IntegerField()
     reason = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField()
-
+    
     class Meta:
         db_table = 'inventory_logs'

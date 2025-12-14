@@ -1,6 +1,3 @@
-<!-- ================================ -->
-<!-- search_results.html -->
-<!-- ================================ -->
 {% extends 'store/base.html' %}
 
 {% block content %}
@@ -17,6 +14,77 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+
+    .product-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        height: 100%;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+
+    .product-image {
+        height: 200px;
+        overflow: hidden;
+    }
+
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-body {
+        padding: 1.5rem;
+    }
+
+    .product-category {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 0.5rem;
+    }
+
+    .product-price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .btn-add-sale {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+    }
+
+    .btn-add-sale:hover {
+        background: var(--secondary-color);
+        color: white;
+        transform: translateY(-2px);
     }
 </style>
 
@@ -49,41 +117,21 @@
                         {% if p.image_url %}
                             <img src="{{ p.image_url }}" alt="{{ p.name }}">
                         {% else %}
-                            <img src="https://via.placeholder.com/400x300/6F4E37/FFFFFF?text=CafeITO" alt="{{ p.name }}">
+                            <img src="https://via.placeholder.com/400x300/6F4E37/FFFFFF?text={{ p.name }}" alt="{{ p.name }}">
                         {% endif %}
-                        <div class="wishlist-btn" onclick="toggleWishlist({{ p.id }}, this)">
-                            <i class="far fa-heart"></i>
-                        </div>
                     </div>
 
                     <div class="product-body">
                         <div class="product-category">{{ p.category.name }}</div>
                         <h5 class="product-title">{{ p.name }}</h5>
-                        <p class="product-description">{{ p.description|truncatechars:60 }}</p>
+                        <div class="product-price">${{ p.price }} MXN</div>
                         
-                        <div class="product-footer">
-                            <div>
-                                <div class="product-price">${{ p.price }}</div>
-                                <div class="product-stock">
-                                    {% if p.stock > 0 %}
-                                        <i class="fas fa-check-circle text-success"></i> En stock
-                                    {% else %}
-                                        <i class="fas fa-times-circle text-danger"></i> Agotado
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="product-actions">
-                            <form action="{% url 'add_to_cart' p.id %}" method="post" style="flex: 1;">
-                                {% csrf_token %}
-                                <input type="hidden" name="qty" value="1">
-                                <button class="btn-add-cart w-100" type="submit" {% if p.stock == 0 %}disabled{% endif %}>
-                                    <i class="fas fa-cart-plus"></i> Agregar
-                                </button>
-                            </form>
-                            <a href="{% url 'product_detail' p.id %}" class="btn-details">
-                                <i class="fas fa-eye"></i>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'product_detail' p.id %}" class="btn btn-outline-primary btn-sm flex-fill">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            <a href="{% url 'add_to_sale' p.id %}" class="btn-add-sale btn-sm flex-fill">
+                                <i class="fas fa-plus"></i> Agregar
                             </a>
                         </div>
                     </div>
@@ -92,8 +140,8 @@
         {% endfor %}
     </div>
 {% else %}
-    <div class="empty-cart">
-        <i class="fas fa-search"></i>
+    <div style="background: white; border-radius: 20px; padding: 4rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <i class="fas fa-search" style="font-size: 5rem; color: #ccc; margin-bottom: 2rem;"></i>
         <h3>No se encontraron productos</h3>
         <p class="text-muted mb-4">
             Intenta con otros términos de búsqueda
@@ -103,110 +151,5 @@
         </a>
     </div>
 {% endif %}
-{% endblock %}
-
-
-<!-- ================================ -->
-<!-- wishlist.html -->
-<!-- ================================ -->
-{% extends 'store/base.html' %}
-
-{% block content %}
-<style>
-    .wishlist-header {
-        background: white;
-        padding: 2rem;
-        border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        margin-bottom: 2rem;
-    }
-</style>
-
-<div class="wishlist-header">
-    <h1 style="font-weight: bold; color: var(--dark-bg); margin-bottom: 0.5rem;">
-        <i class="fas fa-heart"></i> Mis Favoritos
-    </h1>
-    <p class="text-muted mb-0">Los productos que has guardado para después</p>
-</div>
-
-{% if products %}
-    <div class="row g-4">
-        {% for p in products %}
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="product-card">
-                    <div class="product-image">
-                        {% if p.image_url %}
-                            <img src="{{ p.image_url }}" alt="{{ p.name }}">
-                        {% else %}
-                            <img src="https://via.placeholder.com/400x300/6F4E37/FFFFFF?text=CafeITO" alt="{{ p.name }}">
-                        {% endif %}
-                        <div class="wishlist-btn active" onclick="removeFromWishlist({{ p.id }}, this)">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                    </div>
-
-                    <div class="product-body">
-                        <div class="product-category">{{ p.category.name }}</div>
-                        <h5 class="product-title">{{ p.name }}</h5>
-                        <p class="product-description">{{ p.description|truncatechars:60 }}</p>
-                        
-                        <div class="product-footer">
-                            <div>
-                                <div class="product-price">${{ p.price }}</div>
-                                <div class="product-stock">
-                                    {% if p.stock > 0 %}
-                                        <i class="fas fa-check-circle text-success"></i> En stock
-                                    {% else %}
-                                        <i class="fas fa-times-circle text-danger"></i> Agotado
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="product-actions">
-                            <form action="{% url 'add_to_cart' p.id %}" method="post" style="flex: 1;">
-                                {% csrf_token %}
-                                <input type="hidden" name="qty" value="1">
-                                <button class="btn-add-cart w-100" type="submit" {% if p.stock == 0 %}disabled{% endif %}>
-                                    <i class="fas fa-cart-plus"></i> Agregar
-                                </button>
-                            </form>
-                            <a href="{% url 'product_detail' p.id %}" class="btn-details">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="empty-cart" style="background: white; border-radius: 20px; padding: 4rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-        <i class="fas fa-heart-broken" style="font-size: 6rem; color: #ddd; margin-bottom: 2rem;"></i>
-        <h3>No tienes productos favoritos</h3>
-        <p class="text-muted mb-4">Agrega productos a tus favoritos para verlos aquí</p>
-        <a href="{% url 'home' %}" class="btn btn-coffee btn-lg">
-            <i class="fas fa-shopping-bag"></i> Explorar Productos
-        </a>
-    </div>
-{% endif %}
-
-<script>
-    function removeFromWishlist(productId, element) {
-        fetch(`/wishlist/remove/${productId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            }
-        }).then(() => {
-            element.closest('.col-12').remove();
-            // Si no quedan productos, recargar la página
-            if (document.querySelectorAll('.product-card').length === 0) {
-                location.reload();
-            }
-        });
-    }
-</script>
 
 {% endblock %}

@@ -154,10 +154,36 @@
     .summary-item {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         margin-bottom: 0.8rem;
-        padding: 0.5rem;
+        padding: 0.8rem;
         background: #f8f9fa;
         border-radius: 8px;
+        position: relative;
+    }
+
+    .summary-item-info {
+        flex: 1;
+    }
+
+    .btn-remove-item {
+        background: #dc3545;
+        color: white;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-left: 0.5rem;
+    }
+
+    .btn-remove-item:hover {
+        background: #c82333;
+        transform: scale(1.1);
     }
 
     .summary-item-name {
@@ -336,6 +362,12 @@
                         <p>No has seleccionado productos</p>
                     </div>
                 </div>
+                
+                <div class="text-center mt-3" id="clear-all-btn" style="display: none;">
+                    <a href="{% url 'clear_sale' %}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash"></i> Cancelar Venta
+                    </a>
+                </div>
 
                 <div class="summary-total">
                     TOTAL: <span id="total-amount">$0.00 MXN</span>
@@ -439,23 +471,28 @@
                     <p>No has seleccionado productos</p>
                 </div>
             `;
+            document.getElementById('clear-all-btn').style.display = 'none';
         } else {
             let html = '';
             for (let id in selectedProducts) {
                 const item = selectedProducts[id];
                 html += `
                     <div class="summary-item">
-                        <div>
+                        <div class="summary-item-info">
                             <div class="summary-item-name">${item.name}</div>
-                            <div class="summary-item-detail">${item.qty} x $${item.price.toFixed(2)}</div>
+                            <div class="summary-item-detail">${item.qty} x ${item.price.toFixed(2)}</div>
                         </div>
-                        <div style="text-align: right;">
-                            <strong style="color: var(--primary-color);">$${item.subtotal.toFixed(2)}</strong>
+                        <div style="text-align: right; display: flex; align-items: center;">
+                            <strong style="color: var(--primary-color); margin-right: 0.5rem;">${item.subtotal.toFixed(2)}</strong>
+                            <button type="button" class="btn-remove-item" onclick="removeProduct(${id})" title="Eliminar producto">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                 `;
             }
             summaryItems.innerHTML = html;
+            document.getElementById('clear-all-btn').style.display = 'block';
         }
 
         document.getElementById('total-amount').textContent = `$${totalAmount.toFixed(2)} MXN`;
@@ -479,16 +516,24 @@
             
             if (change >= 0) {
                 changeDisplay.className = 'change-display change-positive';
-                changeDisplay.innerHTML = `<i class="fas fa-check-circle"></i> CAMBIO: $${change.toFixed(2)} MXN`;
+                changeDisplay.innerHTML = `<i class="fas fa-check-circle"></i> CAMBIO: ${change.toFixed(2)} MXN`;
                 btnSubmit.disabled = false;
             } else {
                 changeDisplay.className = 'change-display change-negative';
-                changeDisplay.innerHTML = `<i class="fas fa-exclamation-triangle"></i> FALTA: $${Math.abs(change).toFixed(2)} MXN`;
+                changeDisplay.innerHTML = `<i class="fas fa-exclamation-triangle"></i> FALTA: ${Math.abs(change).toFixed(2)} MXN`;
                 btnSubmit.disabled = true;
             }
         } else {
             changeDisplay.style.display = 'none';
             btnSubmit.disabled = true;
+        }
+    }
+
+    function removeProduct(productId) {
+        const input = document.getElementById(`qty-${productId}`);
+        if (input) {
+            input.value = 0;
+            updateSummary();
         }
     }
 
