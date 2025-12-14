@@ -1,0 +1,207 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .orders-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .order-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        border-left: 5px solid var(--primary-color);
+    }
+
+    .order-card:hover {
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .order-number {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+    }
+
+    .order-date {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .order-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .order-body {
+        margin-bottom: 1rem;
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        padding: 0.8rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+    }
+
+    .item-image-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 1rem;
+    }
+
+    .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .order-total {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .btn-view-order {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.3s;
+        font-weight: 600;
+    }
+
+    .btn-view-order:hover {
+        background: var(--secondary-color);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .empty-orders {
+        background: white;
+        border-radius: 20px;
+        padding: 4rem;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .empty-orders i {
+        font-size: 6rem;
+        color: #ddd;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="orders-header">
+    <h1 style="font-weight: bold; color: var(--dark-bg); margin-bottom: 0.5rem;">
+        <i class="fas fa-receipt"></i> Mis Órdenes
+    </h1>
+    <p class="text-muted mb-0">Aquí puedes ver el historial completo de tus compras</p>
+</div>
+
+{% if orders %}
+    {% for order in orders %}
+        <div class="order-card">
+            <div class="order-header">
+                <div>
+                    <div class="order-number">
+                        <i class="fas fa-hashtag"></i> {{ order.order_number }}
+                    </div>
+                    <div class="order-date">
+                        <i class="far fa-calendar"></i> {{ order.created_at|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+                <div>
+                    {% if order.status == 'pending' %}
+                        <span class="order-status status-pending">
+                            <i class="fas fa-clock"></i> Pendiente
+                        </span>
+                    {% elif order.status == 'completed' %}
+                        <span class="order-status status-completed">
+                            <i class="fas fa-check-circle"></i> Completada
+                        </span>
+                    {% else %}
+                        <span class="order-status status-cancelled">
+                            <i class="fas fa-times-circle"></i> Cancelada
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="order-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-credit-card"></i> Método de pago:</strong>
+                        <span class="text-muted">{{ order.payment_method|title }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-money-bill-wave"></i> Estado de pago:</strong>
+                        <span class="text-muted">{{ order.payment_status|title }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-footer">
+                <div class="order-total">
+                    Total: ${{ order.total }}
+                </div>
+                <a href="{% url 'order_detail' order.id %}" class="btn-view-order">
+                    <i class="fas fa-eye"></i> Ver Detalles
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-orders">
+        <i class="fas fa-receipt"></i>
+        <h3>No tienes órdenes aún</h3>
+        <p class="text-muted mb-4">¡Empieza a comprar los mejores cafés!</p>
+        <a href="{% url 'home' %}" class="btn btn-coffee btn-lg">
+            <i class="fas fa-shopping-bag"></i> Ir a la Tienda
+        </a>
+    </div>
+{% endif %}
+
+{% endblock %}

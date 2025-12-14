@@ -1,41 +1,451 @@
 {% extends 'store/base.html' %}
 {% block content %}
-  <h1>Categorías</h1>
-  <div class="row">
-    <div class="col-md-3">
-      <ul class="list-group">
-        {% for c in categories %}
-          <li class="list-group-item"><a href="{% url 'products_by_category' c.id %}">{{ c.name }}</a></li>
-        {% endfor %}
-      </ul>
-    </div>
-    <div class="col-md-9">
-      <div class="row">
-        {% for p in products %}
-          <div class="col-md-4 mb-3">
-            <div class="card h-100">
-              {% if p.image_url %}
-                <img src="{{ p.image_url }}" class="card-img-top" style="height:160px;object-fit:cover;">
-              {% else %}
-                <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top">
-              {% endif %}
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">{{ p.name }}</h5>
-                <p class="card-text">{{ p.description|truncatechars:80 }}</p>
-                <div class="mt-auto">
-                  <p><strong>${{ p.price }}</strong></p>
-                  <a href="{% url 'product_detail' p.id %}" class="btn btn-primary btn-sm">Detalles</a>
-                  <form action="{% url 'add_to_cart' p.id %}" method="post" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="qty" value="1">
-                    <button class="btn btn-success btn-sm">Agregar</button>
-                  </form>
-                </div>
-              </div>
+
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
+        color: white;
+        padding: 4rem 0;
+        border-radius: 20px;
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: rgba(212, 165, 116, 0.1);
+        border-radius: 50%;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-title {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        animation: fadeInUp 0.8s;
+    }
+
+    .hero-subtitle {
+        font-size: 1.3rem;
+        opacity: 0.9;
+        animation: fadeInUp 1s;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Categories Section */
+    .categories-section {
+        margin-bottom: 3rem;
+    }
+
+    .category-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s;
+        cursor: pointer;
+        border: 2px solid transparent;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-color);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .category-card.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .category-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+
+    .category-card.active .category-icon {
+        color: var(--accent-color);
+    }
+
+    .category-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    /* Products Grid */
+    .products-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .product-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        height: 100%;
+        position: relative;
+    }
+
+    .product-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+
+    .product-image {
+        position: relative;
+        overflow: hidden;
+        height: 220px;
+    }
+
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+
+    .product-card:hover .product-image img {
+        transform: scale(1.1);
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: var(--primary-color);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        z-index: 2;
+    }
+
+    .product-badge.nuevo {
+        background: #28a745;
+    }
+
+    .product-badge.oferta {
+        background: #dc3545;
+    }
+
+    .wishlist-btn {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        z-index: 2;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .wishlist-btn:hover {
+        background: #dc3545;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .wishlist-btn.active {
+        background: #dc3545;
+        color: white;
+    }
+
+    .product-body {
+        padding: 1.5rem;
+    }
+
+    .product-category {
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 0.5rem;
+        min-height: 3rem;
+    }
+
+    .product-description {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        min-height: 3rem;
+    }
+
+    .product-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .product-price {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .product-stock {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .product-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .btn-add-cart {
+        flex: 1;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.6rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-add-cart:hover {
+        background: var(--secondary-color);
+        transform: translateY(-2px);
+    }
+
+    .btn-details {
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-details:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* Filter Section */
+    .filter-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .filter-title {
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-content">
+                <h1 class="hero-title">
+                    <i class="fas fa-mug-hot"></i> Bienvenido a CafeITO
+                </h1>
+                <p class="hero-subtitle">
+                    Descubre los mejores cafés artesanales, seleccionados especialmente para ti
+                </p>
+                <a href="#productos" class="btn btn-coffee btn-lg mt-3">
+                    <i class="fas fa-shopping-bag"></i> Explorar Productos
+                </a>
             </div>
-          </div>
-        {% endfor %}
-      </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-coffee" style="font-size: 15rem; opacity: 0.2;"></i>
+            </div>
+        </div>
     </div>
-  </div>
+</div>
+
+<!-- Categories Section -->
+<div class="categories-section">
+    <h2 class="text-center mb-4" style="font-weight: bold; color: var(--dark-bg);">
+        <i class="fas fa-th-large"></i> Categorías
+    </h2>
+    <div class="row g-3">
+        <div class="col-6 col-md-3">
+            <div class="category-card" onclick="window.location.href='{% url 'home' %}'">
+                <div class="category-icon">
+                    <i class="fas fa-border-all"></i>
+                </div>
+                <div class="category-name">Todos</div>
+            </div>
+        </div>
+        {% for c in categories %}
+            <div class="col-6 col-md-3">
+                <div class="category-card" onclick="window.location.href='{% url 'products_by_category' c.id %}'">
+                    <div class="category-icon">
+                        <i class="fas fa-mug-hot"></i>
+                    </div>
+                    <div class="category-name">{{ c.name }}</div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Products Section -->
+<div id="productos">
+    <div class="products-header">
+        <h2 style="font-weight: bold; color: var(--dark-bg); margin: 0;">
+            <i class="fas fa-fire"></i> Productos Destacados
+        </h2>
+        <div>
+            <span class="badge bg-secondary">{{ products|length }} productos</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for p in products %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="product-card">
+                    <div class="product-image">
+                        {% if p.image_url %}
+                            <img src="{{ p.image_url }}" alt="{{ p.name }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/400x300/6F4E37/FFFFFF?text=CafeITO" alt="{{ p.name }}">
+                        {% endif %}
+                        
+                        <!-- Wishlist Button -->
+                        <div class="wishlist-btn" onclick="toggleWishlist({{ p.id }}, this)">
+                            <i class="far fa-heart"></i>
+                        </div>
+
+                        <!-- Badge (opcional) -->
+                        {% if forloop.counter <= 3 %}
+                            <div class="product-badge nuevo">Nuevo</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="product-body">
+                        <div class="product-category">{{ p.category.name }}</div>
+                        <h5 class="product-title">{{ p.name }}</h5>
+                        <p class="product-description">{{ p.description|truncatechars:60 }}</p>
+                        
+                        <div class="product-footer">
+                            <div>
+                                <div class="product-price">${{ p.price }}</div>
+                                <div class="product-stock">
+                                    {% if p.stock > 0 %}
+                                        <i class="fas fa-check-circle text-success"></i> En stock
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i> Agotado
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="product-actions">
+                            <form action="{% url 'add_to_cart' p.id %}" method="post" style="flex: 1;">
+                                {% csrf_token %}
+                                <input type="hidden" name="qty" value="1">
+                                <button class="btn-add-cart w-100" type="submit" {% if p.stock == 0 %}disabled{% endif %}>
+                                    <i class="fas fa-cart-plus"></i> Agregar
+                                </button>
+                            </form>
+                            <a href="{% url 'product_detail' p.id %}" class="btn-details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-box-open" style="font-size: 5rem; color: #ccc;"></i>
+                <h3 class="mt-3">No hay productos disponibles</h3>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function toggleWishlist(productId, element) {
+        element.classList.toggle('active');
+        const icon = element.querySelector('i');
+        
+        if (element.classList.contains('active')) {
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+            
+            // Aquí harías el POST a tu vista de favoritos
+            fetch(`/wishlist/add/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+        } else {
+            icon.classList.remove('fas');
+            icon.classList.add('far');
+            
+            // Aquí harías el DELETE
+            fetch(`/wishlist/remove/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+    }
+
+    // Smooth scroll to products
+    document.querySelector('a[href="#productos"]')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('productos').scrollIntoView({ behavior: 'smooth' });
+    });
+</script>
 {% endblock %}
