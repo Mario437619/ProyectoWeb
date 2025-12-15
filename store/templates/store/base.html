@@ -187,14 +187,22 @@
         .scroll-top.show {
             display: flex;
         }
+
+        /* Badge para rol de usuario */
+        .role-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            margin-left: 0.5rem;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">
-    <i class="fas fa-coffee"></i> CafeITO
-</a>
+                <i class="fas fa-coffee"></i> CafeITO
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -217,23 +225,34 @@
                                 <i class="fas fa-home"></i> Inicio
                             </a>
                         </li>
+                        
+                        <!-- PANEL DE VENTAS - VISIBLE PARA TODOS -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'multi_sale' %}">
                                 <i class="fas fa-shopping-basket"></i> Panel de Ventas
                             </a>
                         </li>
-                        <!-- Carrito eliminado según solicitud -->
+                        
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle"></i> {{ user.username }}
+                                {% if user.is_staff %}
+                                    <span class="role-badge bg-danger">Admin</span>
+                                {% elif user.groups.all.0.name == 'Vendedor' %}
+                                    <span class="role-badge bg-info">Vendedor</span>
+                                {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                {% if user.is_staff %}
+                                <!-- MENÚ SOLO PARA ADMINISTRADORES -->
+                                {% if user.is_staff or user.groups.all.0.name == 'Administrador' %}
                                     <li><a class="dropdown-item" href="{% url 'admin_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Panel Admin</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'admin_products' %}"><i class="fas fa-box"></i> Productos</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'admin_products' %}"><i class="fas fa-box"></i> Gestión de Productos</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'admin_users' %}"><i class="fas fa-users"></i> Gestión de Usuarios</a></li>
                                     <li><a class="dropdown-item" href="{% url 'reports' %}"><i class="fas fa-chart-line"></i> Reportes</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 {% endif %}
+                                
+                                <!-- OPCIÓN COMÚN PARA TODOS -->
                                 <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
                             </ul>
                         </li>
