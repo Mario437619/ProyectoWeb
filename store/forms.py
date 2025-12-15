@@ -43,6 +43,7 @@ class RegisterForm(UserCreationForm):
             raise forms.ValidationError('Las contraseñas no coinciden')
         return password2
 
+
 class ProductForm(forms.ModelForm):
     TIPO_CHOICES = [
         ('', '-- Sin clasificar --'),
@@ -63,13 +64,13 @@ class ProductForm(forms.ModelForm):
     
     class Meta:
         model = Product
-        fields = ['name', 'description', 'category', 'tipo', 'price', 'image_url', 'stock', 'is_active']
+        fields = ['name', 'description', 'category', 'tipo', 'price', 'image', 'stock', 'is_active']
         labels = {
             'name': 'Nombre del Producto',
             'description': 'Descripción',
             'category': 'Categoría',
             'price': 'Precio (MXN)',
-            'image_url': 'URL de la Imagen',
+            'image': 'Imagen del Producto',
             'stock': 'Cantidad en Stock',
             'is_active': 'Activo',
         }
@@ -78,7 +79,7 @@ class ProductForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción del producto...'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-            'image_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://ejemplo.com/imagen.jpg'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

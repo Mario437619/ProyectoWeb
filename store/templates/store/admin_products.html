@@ -70,12 +70,24 @@
         height: 200px;
         overflow: hidden;
         position: relative;
+        background: #f8f9fa;
     }
 
     .product-image-admin img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+
+    .no-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        color: #6c757d;
+        font-size: 4rem;
     }
 
     .product-badge-admin {
@@ -281,10 +293,12 @@
     {% for p in products %}
         <div class="product-card-admin" data-name="{{ p.name|lower }}" data-category="{{ p.category.name }}" data-stock="{{ p.stock }}">
             <div class="product-image-admin">
-                {% if p.image_url %}
-                    <img src="{{ p.image_url }}" alt="{{ p.name }}">
+                {% if p.image %}
+                    <img src="{{ p.image.url }}" alt="{{ p.name }}">
                 {% else %}
-                    <img src="https://via.placeholder.com/280x200/6F4E37/FFFFFF?text={{ p.name|slice:':1' }}" alt="{{ p.name }}">
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-image"></i>
+                    </div>
                 {% endif %}
                 
                 <div class="product-badge-admin">ID: {{ p.id }}</div>

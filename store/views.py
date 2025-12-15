@@ -265,7 +265,7 @@ def multi_sale(request):
                 'name': product.name,
                 'price': product.price,
                 'stock': product.stock,
-                'image_url': product.image_url,
+                'image_url': product.image.url if product.image else '',
                 'quantity': sale_items.get(str(product.id), 0)
             }
             products_list.append(product_dict)

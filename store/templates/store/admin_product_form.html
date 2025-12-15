@@ -67,6 +67,19 @@
         margin-top: 0.5rem;
         font-size: 0.9rem;
     }
+
+    .current-image {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .current-image img {
+        max-width: 200px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 </style>
 
 <div class="form-container">
@@ -82,7 +95,8 @@
             </h2>
         </div>
 
-        <form method="post">
+        <!-- ⬇️ IMPORTANTE: enctype="multipart/form-data" -->
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="form-group">
@@ -169,14 +183,23 @@
                 </div>
             </div>
 
+            <!-- ⬇️ CORREGIDO: image_url → image -->
             <div class="form-group">
-                <label class="form-label" for="{{ form.image_url.id_for_label }}">
-                    <i class="fas fa-image"></i> {{ form.image_url.label }}
+                <label class="form-label" for="{{ form.image.id_for_label }}">
+                    <i class="fas fa-image"></i> {{ form.image.label }}
                 </label>
-                {{ form.image_url }}
-                {% if form.image_url.errors %}
+                {{ form.image }}
+                {% if form.image.errors %}
                     <div class="error-message">
-                        {{ form.image_url.errors|striptags }}
+                        {{ form.image.errors|striptags }}
+                    </div>
+                {% endif %}
+                
+                <!-- Mostrar imagen actual si existe -->
+                {% if form.instance.image %}
+                    <div class="current-image">
+                        <p class="mb-2"><strong>Imagen actual:</strong></p>
+                        <img src="{{ form.instance.image.url }}" alt="Imagen del producto">
                     </div>
                 {% endif %}
             </div>

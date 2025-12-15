@@ -4,7 +4,8 @@ from django.contrib.auth.models import User
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    image_url = models.CharField(max_length=500, null=True, blank=True)
+    # CAMBIADO: Ahora usa ImageField en lugar de CharField para URL
+    image = models.ImageField(upload_to='categories/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
@@ -22,7 +23,8 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     tipo = models.CharField(max_length=50, null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    image_url = models.CharField(max_length=500, null=True, blank=True)
+    # CAMBIADO: Ahora usa ImageField en lugar de CharField para URL
+    image = models.ImageField(upload_to='products/', null=True, blank=True)
     stock = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField()
