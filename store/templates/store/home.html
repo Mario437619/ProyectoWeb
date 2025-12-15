@@ -186,58 +186,6 @@
         font-size: 0.85rem;
         color: #666;
     }
-
-    .product-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-    }
-
-    .btn-view {
-        flex: 1;
-        background: white;
-        color: var(--primary-color);
-        border: 2px solid var(--primary-color);
-        padding: 0.6rem;
-        border-radius: 10px;
-        font-weight: 600;
-        transition: all 0.3s;
-        text-decoration: none;
-        display: block;
-        text-align: center;
-    }
-
-    .btn-view:hover {
-        background: var(--primary-color);
-        color: white;
-        transform: translateY(-2px);
-    }
-
-    .btn-add-sale {
-        flex: 1;
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 0.6rem;
-        border-radius: 10px;
-        font-weight: 600;
-        transition: all 0.3s;
-        text-decoration: none;
-        display: block;
-        text-align: center;
-    }
-
-    .btn-add-sale:hover {
-        background: var(--secondary-color);
-        transform: translateY(-2px);
-        color: white;
-    }
-
-    .btn-add-sale:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-        transform: none;
-    }
 </style>
 
 <div class="hero-section">
@@ -250,9 +198,15 @@
                 <p class="hero-subtitle">
                     Descubre los mejores cafés y productos de panadería artesanales
                 </p>
-                <a href="#productos" class="btn btn-coffee btn-lg mt-3">
-                    <i class="fas fa-shopping-bag"></i> Ver Productos
+                {% if user.is_authenticated %}
+                <a href="{% url 'multi_sale' %}" class="btn btn-coffee btn-lg mt-3">
+                    <i class="fas fa-shopping-basket"></i> Ir al Panel de Ventas
                 </a>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn btn-coffee btn-lg mt-3">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión para Vender
+                </a>
+                {% endif %}
             </div>
             <div class="col-lg-6 text-center">
                 <i class="fas fa-coffee" style="font-size: 15rem; opacity: 0.2;"></i>
@@ -285,7 +239,7 @@
                         {% elif 'pastel' in c.name|lower or 'cake' in c.name|lower %}
                             <i class="fas fa-birthday-cake"></i>
                         {% elif 'galleta' in c.name|lower or 'cookie' in c.name|lower %}
-                            <i class="fas fa-coffee"></i>
+                            <i class="fas fa-cookie"></i>
                         {% else %}
                             <i class="fas fa-box"></i>
                         {% endif %}
@@ -340,21 +294,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="product-actions">
-                            <a href="{% url 'product_detail' p.id %}" class="btn-view">
-                                <i class="fas fa-eye"></i> Ver
-                            </a>
-                            {% if p.stock > 0 and user.is_authenticated %}
-                                <a href="{% url 'add_to_sale' p.id %}" class="btn-add-sale">
-                                    <i class="fas fa-plus"></i> Agregar
-                                </a>
-                            {% else %}
-                                <button class="btn-add-sale" disabled>
-                                    <i class="fas fa-times"></i> Agotado
-                                </button>
-                            {% endif %}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -366,6 +305,14 @@
         {% endfor %}
     </div>
 </div>
+
+{% if user.is_authenticated %}
+<div class="text-center mt-5 mb-4">
+    <a href="{% url 'multi_sale' %}" class="btn btn-coffee btn-lg">
+        <i class="fas fa-shopping-basket"></i> Ir al Panel de Ventas
+    </a>
+</div>
+{% endif %}
 
 <script>
     document.querySelector('a[href="#productos"]')?.addEventListener('click', (e) => {

@@ -58,6 +58,7 @@
         font-weight: bold;
         color: var(--dark-bg);
         margin-bottom: 0.5rem;
+        min-height: 3rem;
     }
 
     .product-price {
@@ -67,24 +68,9 @@
         margin-bottom: 1rem;
     }
 
-    .btn-add-sale {
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 0.6rem 1rem;
-        border-radius: 10px;
-        font-weight: 600;
-        transition: all 0.3s;
-        text-decoration: none;
-        display: inline-block;
-        width: 100%;
-        text-align: center;
-    }
-
-    .btn-add-sale:hover {
-        background: var(--secondary-color);
-        color: white;
-        transform: translateY(-2px);
+    .product-stock {
+        font-size: 0.85rem;
+        color: #666;
     }
 </style>
 
@@ -126,19 +112,26 @@
                         <h5 class="product-title">{{ p.name }}</h5>
                         <div class="product-price">${{ p.price }} MXN</div>
                         
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'product_detail' p.id %}" class="btn btn-outline-primary btn-sm flex-fill">
-                                <i class="fas fa-eye"></i> Ver
-                            </a>
-                            <a href="{% url 'add_to_sale' p.id %}" class="btn-add-sale btn-sm flex-fill">
-                                <i class="fas fa-plus"></i> Agregar
-                            </a>
+                        <div class="product-stock">
+                            {% if p.stock > 0 %}
+                                <i class="fas fa-check-circle text-success"></i> {{ p.stock }} disponibles
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> Agotado
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
+
+    {% if user.is_authenticated %}
+    <div class="text-center mt-5 mb-4">
+        <a href="{% url 'multi_sale' %}" class="btn btn-coffee btn-lg">
+            <i class="fas fa-shopping-basket"></i> Ir al Panel de Ventas
+        </a>
+    </div>
+    {% endif %}
 {% else %}
     <div style="background: white; border-radius: 20px; padding: 4rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
         <i class="fas fa-search" style="font-size: 5rem; color: #ccc; margin-bottom: 2rem;"></i>

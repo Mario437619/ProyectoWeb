@@ -49,24 +49,19 @@
         margin-bottom: 2rem;
     }
 
-    .btn-add-multiple {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        border: none;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 1.2rem;
-        transition: all 0.3s;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        text-decoration: none;
+    .info-badge {
         display: inline-block;
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-top: 1rem;
+        font-weight: 600;
+        color: var(--dark-bg);
     }
 
-    .btn-add-multiple:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-        color: white;
+    .info-badge i {
+        color: var(--primary-color);
+        margin-right: 0.5rem;
     }
 </style>
 
@@ -87,6 +82,9 @@
             <div class="col-md-6">
                 <div class="mb-3">
                     <span class="badge bg-secondary">{{ product.category.name }}</span>
+                    {% if product.tipo %}
+                        <span class="badge bg-info ms-2">{{ product.tipo }}</span>
+                    {% endif %}
                 </div>
                 
                 <h1 class="product-title-large">{{ product.name }}</h1>
@@ -115,15 +113,17 @@
                     <p>{{ product.description|default:"Este delicioso producto está esperando por ti." }}</p>
                 </div>
 
-{% if product.stock > 0 %}
-    <a href="{% url 'add_to_sale' product.id %}" class="btn-add-to-sale">
-        <i class="fas fa-plus-circle"></i> Agregar a Venta
-    </a>
-{% else %}
-    <button class="btn-add-to-sale" disabled style="opacity: 0.5;">
-        <i class="fas fa-times"></i> No Disponible
-    </button>
-{% endif %}
+                {% if user.is_authenticated %}
+                <div class="info-badge">
+                    <i class="fas fa-shopping-basket"></i>
+                    Para realizar una venta, dirígete al <a href="{% url 'multi_sale' %}">Panel de Ventas</a>
+                </div>
+                {% else %}
+                <div class="info-badge">
+                    <i class="fas fa-lock"></i>
+                    <a href="{% url 'login' %}">Inicia sesión</a> para realizar ventas
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
