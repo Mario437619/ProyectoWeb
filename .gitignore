@@ -1,0 +1,24 @@
+# Entorno virtual
+venv/
+
+# Archivos de cache de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de datos SQLite
+db.sqlite3
+
+# Archivos de distribución y paquetes instalados
+*.egg-info/
+*.dist-info/
+
+# Archivos estáticos recopilados por Django
+staticfiles/
+
+# Configuración de VS Code (opcional)
+.vscode/
+
+# Logs
+*.log
