@@ -10,6 +10,58 @@
         margin-bottom: 2rem;
     }
 
+    /* Navegación rápida entre categorías */
+    .quick-nav {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .quick-nav-title {
+        font-size: 1rem;
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .category-buttons {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-category {
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        padding: 0.6rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .btn-category:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .btn-category.active {
+        background: var(--primary-color);
+        color: white;
+    }
+
     .tipo-section {
         margin-bottom: 3rem;
     }
@@ -103,7 +155,33 @@
         color: var(--primary-color);
     }
 
-    .btn-details {
+    .product-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .btn-view {
+        flex: 1;
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        padding: 0.6rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+
+    .btn-view:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-add-sale {
+        flex: 1;
         background: var(--primary-color);
         color: white;
         border: none;
@@ -114,17 +192,16 @@
         text-decoration: none;
         display: block;
         text-align: center;
-        width: 100%;
     }
 
-    .btn-details:hover {
+    .btn-add-sale:hover {
         background: var(--secondary-color);
         color: white;
     }
 </style>
 
 <a href="{% url 'home' %}" class="btn btn-outline-secondary mb-3">
-    <i class="fas fa-arrow-left"></i> Volver
+    <i class="fas fa-arrow-left"></i> Volver al Inicio
 </a>
 
 <div class="category-header">
@@ -134,6 +211,34 @@
     <p class="text-muted mb-0">{{ category.description|default:"Explora nuestros productos" }}</p>
 </div>
 
+<!-- Navegación Rápida entre Categorías -->
+<div class="quick-nav">
+    <div class="quick-nav-title">
+        <i class="fas fa-bolt"></i>
+        Navegar a otra categoría:
+    </div>
+    <div class="category-buttons">
+        {% for cat in all_categories %}
+            <a href="{% url 'products_by_category' cat.id %}" 
+               class="btn-category {% if cat.id == category.id %}active{% endif %}">
+                {% if 'pan' in cat.name|lower %}
+                    <i class="fas fa-bread-slice"></i>
+                {% elif 'cafe' in cat.name|lower or 'coffee' in cat.name|lower %}
+                    <i class="fas fa-mug-hot"></i>
+                {% elif 'pastel' in cat.name|lower %}
+                    <i class="fas fa-birthday-cake"></i>
+                {% elif 'galleta' in cat.name|lower %}
+                    <i class="fas fa-cookie"></i>
+                {% else %}
+                    <i class="fas fa-tag"></i>
+                {% endif %}
+                {{ cat.name }}
+            </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Productos organizados por TIPO (subcategorías) -->
 {% regroup products by tipo as productos_por_tipo %}
 
 {% for tipo in productos_por_tipo %}
@@ -144,22 +249,22 @@
                 <h3>☕ Bebidas Calientes</h3>
             {% elif tipo.grouper == 'Bebida Fría' %}
                 <i class="fas fa-snowflake"></i>
-                <h3> Bebidas Frías</h3>
+                <h3>🧊 Bebidas Frías</h3>
             {% elif tipo.grouper == 'Pan Dulce' %}
                 <i class="fas fa-cookie-bite"></i>
-                <h3> Pan Dulce</h3>
+                <h3>🍪 Pan Dulce</h3>
             {% elif tipo.grouper == 'Pan Salado' %}
                 <i class="fas fa-bread-slice"></i>
-                <h3> Pan Salado</h3>
+                <h3>🥖 Pan Salado</h3>
             {% elif tipo.grouper == 'Pastel Individual' %}
                 <i class="fas fa-birthday-cake"></i>
-                <h3> Pasteles Individuales</h3>
+                <h3>🧁 Pasteles Individuales</h3>
             {% elif tipo.grouper == 'Pastel Grande' %}
                 <i class="fas fa-birthday-cake"></i>
-                <h3> Pasteles Grandes</h3>
+                <h3>🎂 Pasteles Grandes</h3>
             {% else %}
                 <i class="fas fa-box"></i>
-                <h3> Otros Productos</h3>
+                <h3>📦 Otros Productos</h3>
             {% endif %}
         </div>
 
@@ -200,9 +305,20 @@
                                 </div>
                             </div>
 
-                            <a href="{% url 'product_detail' p.id %}" class="btn-details">
-                                <i class="fas fa-eye"></i> Ver Detalles
-                            </a>
+                            <div class="product-actions">
+                                <a href="{% url 'product_detail' p.id %}" class="btn-view">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                                {% if p.stock > 0 and user.is_authenticated %}
+                                    <a href="{% url 'add_to_sale' p.id %}" class="btn-add-sale">
+                                        <i class="fas fa-plus"></i> Agregar
+                                    </a>
+                                {% else %}
+                                    <button class="btn-add-sale" disabled style="opacity: 0.5;">
+                                        <i class="fas fa-times"></i> Agotado
+                                    </button>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>

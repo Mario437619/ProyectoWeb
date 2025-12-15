@@ -31,8 +31,16 @@ path('receipt/<int:order_id>/', views.sale_receipt, name='sale_receipt'),
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
     
     # Panel - Dashboard
-    path('panel/dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    
+    # PANEL PERSONALIZADO (cambiar de /admin/ a /panel/)
+path('panel/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+
+# Panel - Usuarios (NUEVO - AGREGAR ESTO)
+path('panel/users/', views.admin_users, name='admin_users'),
+path('panel/users/create/', views.admin_user_create, name='admin_user_create'),
+path('panel/users/edit/<int:user_id>/', views.admin_user_edit, name='admin_user_edit'),
+path('panel/users/delete/<int:user_id>/', views.admin_user_delete, name='admin_user_delete'),
+
+# Panel - Productos
     # Panel - Productos
     path('panel/products/', views.admin_products, name='admin_products'),
     path('panel/products/create/', views.admin_product_create, name='admin_product_create'),

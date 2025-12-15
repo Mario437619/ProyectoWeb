@@ -1,0 +1,178 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .form-card {
+        background: white;
+        padding: 3rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .form-title {
+        font-weight: bold;
+        color: var(--dark-bg);
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .role-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .role-option {
+        border: 3px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+
+    .role-option input[type="radio"] {
+        display: none;
+    }
+
+    .role-option:hover {
+        border-color: var(--accent-color);
+        transform: translateY(-2px);
+    }
+
+    .role-option input[type="radio"]:checked + label {
+        color: white;
+    }
+
+    .role-option.admin {
+        background: white;
+    }
+
+    .role-option.admin input[type="radio"]:checked ~ * {
+        color: white;
+    }
+
+    .role-option.admin:has(input:checked) {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border-color: #dc3545;
+        color: white;
+    }
+
+    .role-option.vendedor:has(input:checked) {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border-color: #17a2b8;
+        color: white;
+    }
+
+    .role-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .role-name {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .role-description {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+</style>
+
+<div class="form-container">
+    <div class="form-card">
+        <h2 class="form-title">
+            <i class="fas fa-user-cog"></i> 
+            {% if usuario %}Editar Usuario{% else %}Nuevo Usuario{% endif %}
+        </h2>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-user"></i> Nombre de Usuario
+                </label>
+                <input type="text" name="username" class="form-control" 
+                       value="{{ usuario.username|default:'' }}" 
+                       placeholder="Ej: juan.perez" 
+                       required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-envelope"></i> Email
+                </label>
+                <input type="email" name="email" class="form-control" 
+                       value="{{ usuario.email|default:'' }}" 
+                       placeholder="correo@ejemplo.com">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-lock"></i> Contraseña 
+                    {% if usuario %}<span class="text-muted small">(dejar en blanco para mantener la actual)</span>{% endif %}
+                </label>
+                <input type="password" name="password" class="form-control" 
+                       placeholder="••••••••" 
+                       {% if not usuario %}required{% endif %}>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-user-tag"></i> Rol del Usuario
+                </label>
+                
+                <div class="role-selector">
+                    <div class="role-option admin">
+                        <input type="radio" name="rol" value="admin" id="rol-admin" 
+                               {% if rol_actual == 'admin' %}checked{% endif %}>
+                        <label for="rol-admin" style="cursor: pointer; margin: 0;">
+                            <div class="role-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="role-name">Administrador</div>
+                            <div class="role-description">
+                                Acceso completo al sistema
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="role-option vendedor">
+                        <input type="radio" name="rol" value="vendedor" id="rol-vendedor"
+                               {% if not usuario or rol_actual == 'vendedor' %}checked{% endif %}>
+                        <label for="rol-vendedor" style="cursor: pointer; margin: 0;">
+                            <div class="role-icon">
+                                <i class="fas fa-cash-register"></i>
+                            </div>
+                            <div class="role-name">Vendedor</div>
+                            <div class="role-description">
+                                Solo realiza ventas
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-coffee">
+                    <i class="fas fa-save"></i> Guardar Usuario
+                </button>
+                <a href="{% url 'admin_users' %}" class="btn btn-outline-secondary px-4">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

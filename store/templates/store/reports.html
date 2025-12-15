@@ -1,6 +1,6 @@
 {% extends 'store/base.html' %}
-{% block content %}
 
+{% block content %}
 <style>
     .reports-header {
         background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
@@ -13,8 +13,8 @@
 
     .filter-card {
         background: white;
-        padding: 2rem;
         border-radius: 15px;
+        padding: 1.5rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         margin-bottom: 2rem;
     }
@@ -26,48 +26,39 @@
         margin-bottom: 2rem;
     }
 
-    .stat-card {
+    .stat-box {
         background: white;
-        padding: 2rem;
         border-radius: 15px;
+        padding: 1.5rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        text-align: center;
         transition: all 0.3s;
     }
 
-    .stat-card:hover {
+    .stat-box:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
     .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
+        font-size: 3rem;
         margin-bottom: 1rem;
     }
 
-    .stat-icon.sales {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    .stat-icon.primary {
+        color: var(--primary-color);
     }
 
-    .stat-icon.orders {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
+    .stat-icon.success {
+        color: #28a745;
     }
 
-    .stat-icon.products {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
+    .stat-icon.warning {
+        color: #ffc107;
     }
 
-    .stat-icon.avg {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        color: white;
+    .stat-icon.info {
+        color: #17a2b8;
     }
 
     .stat-value {
@@ -79,115 +70,48 @@
 
     .stat-label {
         color: #666;
-        font-size: 0.95rem;
+        font-size: 1rem;
         text-transform: uppercase;
         font-weight: 600;
     }
 
-    .report-section {
+    .table-card {
         background: white;
-        padding: 2rem;
         border-radius: 15px;
+        padding: 1.5rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         margin-bottom: 2rem;
     }
 
-    .section-title {
+    .table-title {
         font-size: 1.5rem;
         font-weight: bold;
         color: var(--dark-bg);
         margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid #f0f0f0;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .orders-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .orders-table thead {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    .orders-table th,
-    .orders-table td {
-        padding: 1rem;
-        text-align: left;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .orders-table tbody tr:hover {
-        background: #f8f9fa;
-    }
-
-    .status-badge {
-        padding: 0.4rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .status-completed {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .status-pending {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    .product-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 1rem;
-        background: #f8f9fa;
+    .date-input {
+        border: 2px solid #e0e0e0;
         border-radius: 10px;
-        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+        font-size: 1rem;
         transition: all 0.3s;
     }
 
-    .product-item:hover {
-        background: #e9ecef;
-        transform: translateX(5px);
-    }
-
-    .product-name {
-        font-weight: 600;
-        color: var(--dark-bg);
-    }
-
-    .product-quantity {
-        background: var(--primary-color);
-        color: white;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-weight: bold;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 4rem;
-        color: #999;
-    }
-
-    .empty-state i {
-        font-size: 5rem;
-        margin-bottom: 1rem;
-        opacity: 0.3;
+    .date-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.15);
     }
 
     .btn-filter {
         background: var(--primary-color);
         color: white;
         border: none;
-        padding: 0.8rem 2rem;
-        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
         font-weight: 600;
         transition: all 0.3s;
     }
@@ -197,188 +121,272 @@
         transform: translateY(-2px);
     }
 
-    .date-range-info {
-        background: #e7f3ff;
-        border-left: 4px solid #2196F3;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+    }
+
+    .badge-category {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
     }
 </style>
 
 <div class="reports-header">
-    <h1 style="font-weight: bold; margin-bottom: 0.5rem;">
-        <i class="fas fa-chart-bar"></i> Reportes de Ventas
-    </h1>
-    <p class="mb-0 opacity-75">Analiza el rendimiento de tu negocio</p>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-2">
+                <i class="fas fa-chart-line"></i> Reportes de Ventas
+            </h1>
+            <p class="mb-0 opacity-75">Análisis detallado del desempeño de ventas</p>
+        </div>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-light">
+            <i class="fas fa-arrow-left"></i> Volver al Panel
+        </a>
+    </div>
 </div>
 
 <!-- Filtros de Fecha -->
 <div class="filter-card">
-    <h4 style="font-weight: bold; color: var(--dark-bg); margin-bottom: 1.5rem;">
-        <i class="fas fa-calendar-alt"></i> Seleccionar Período
-    </h4>
-    <form method="GET" class="row g-3">
+    <form method="GET" class="row g-3 align-items-end">
         <div class="col-md-4">
-            <label class="form-label fw-bold">Fecha Inicio</label>
-            <input type="date" name="start_date" class="form-control form-control-lg" 
-                   value="{{ start_date|date:'Y-m-d' }}" required>
+            <label class="form-label fw-bold">
+                <i class="fas fa-calendar-alt"></i> Fecha Inicio
+            </label>
+            <input type="date" 
+                   name="fecha_inicio" 
+                   class="form-control date-input" 
+                   value="{{ fecha_inicio|date:'Y-m-d' }}">
         </div>
         <div class="col-md-4">
-            <label class="form-label fw-bold">Fecha Fin</label>
-            <input type="date" name="end_date" class="form-control form-control-lg" 
-                   value="{{ end_date|date:'Y-m-d' }}" required>
+            <label class="form-label fw-bold">
+                <i class="fas fa-calendar-alt"></i> Fecha Fin
+            </label>
+            <input type="date" 
+                   name="fecha_fin" 
+                   class="form-control date-input" 
+                   value="{{ fecha_fin|date:'Y-m-d' }}">
         </div>
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn-filter w-100">
-                <i class="fas fa-search"></i> Generar Reporte
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-filter w-100">
+                <i class="fas fa-search"></i> Filtrar Reportes
             </button>
         </div>
     </form>
-
-    {% if start_date and end_date %}
-    <div class="date-range-info mt-3">
-        <strong><i class="fas fa-info-circle"></i> Período seleccionado:</strong>
-        {{ start_date|date:"d/m/Y" }} - {{ end_date|date:"d/m/Y" }}
+    
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="?fecha_inicio={{ 'now'|date:'Y-m-d' }}&fecha_fin={{ 'now'|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-calendar-day"></i> Hoy
+                </a>
+                <a href="?fecha_inicio={{ 'now'|date:'Y-m-d'|date:'U'|add:'-604800'|date:'Y-m-d' }}&fecha_fin={{ 'now'|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-calendar-week"></i> Última Semana
+                </a>
+                <a href="?fecha_inicio={{ 'now'|date:'Y-m-01' }}&fecha_fin={{ 'now'|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-calendar-alt"></i> Este Mes
+                </a>
+                <a href="{% url 'reports' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-sync"></i> Reiniciar
+                </a>
+            </div>
+        </div>
     </div>
+</div>
+
+<!-- Estadísticas Principales -->
+<div class="stats-grid">
+    <div class="stat-box">
+        <div class="stat-icon primary">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-value">${{ total_ventas|floatformat:2 }}</div>
+        <div class="stat-label">Total Ventas</div>
+    </div>
+
+    <div class="stat-box">
+        <div class="stat-icon success">
+            <i class="fas fa-receipt"></i>
+        </div>
+        <div class="stat-value">{{ total_ordenes }}</div>
+        <div class="stat-label">Total Órdenes</div>
+    </div>
+
+    <div class="stat-box">
+        <div class="stat-icon warning">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="stat-value">${{ ticket_promedio|floatformat:2 }}</div>
+        <div class="stat-label">Ticket Promedio</div>
+    </div>
+
+    <div class="stat-box">
+        <div class="stat-icon info">
+            <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-value">{{ dias_periodo }} día{{ dias_periodo|pluralize:"s" }}</div>
+        <div class="stat-label">Período</div>
+    </div>
+</div>
+
+<!-- Productos Más Vendidos -->
+<div class="table-card">
+    <div class="table-title">
+        <i class="fas fa-fire"></i> Productos Más Vendidos
+    </div>
+
+    {% if productos_vendidos %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th class="text-center">Cantidad Vendida</th>
+                        <th class="text-end">Ingresos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in productos_vendidos %}
+                        <tr>
+                            <td><strong>{{ forloop.counter }}</strong></td>
+                            <td>{{ item.product__name }}</td>
+                            <td>
+                                <span class="badge-category" style="background: #e9ecef; color: var(--dark-bg);">
+                                    {{ item.product__category__name }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary">{{ item.total_qty }}</span>
+                            </td>
+                            <td class="text-end" style="font-weight: bold; color: var(--primary-color);">
+                                ${{ item.total_revenue|floatformat:2 }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <p>No hay datos de productos en el período seleccionado</p>
+        </div>
     {% endif %}
 </div>
 
-<!-- Estadísticas Resumidas -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon sales">
-            <i class="fas fa-dollar-sign"></i>
-        </div>
-        <div class="stat-value">${{ total_sales|floatformat:2 }}</div>
-        <div class="stat-label">Ventas Totales</div>
+<!-- Ventas por Categoría -->
+<div class="table-card">
+    <div class="table-title">
+        <i class="fas fa-layer-group"></i> Ventas por Categoría
     </div>
 
-    <div class="stat-card">
-        <div class="stat-icon orders">
-            <i class="fas fa-receipt"></i>
+    {% if ventas_por_categoria %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th class="text-center">Productos Vendidos</th>
+                        <th class="text-end">Total Ingresos</th>
+                        <th class="text-end">% del Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in ventas_por_categoria %}
+                        <tr>
+                            <td style="font-weight: bold;">
+                                <i class="fas fa-tag"></i> {{ cat.product__category__name }}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ cat.total_qty }}</span>
+                            </td>
+                            <td class="text-end" style="font-weight: bold; color: var(--primary-color);">
+                                ${{ cat.total_revenue|floatformat:2 }}
+                            </td>
+                            <td class="text-end">
+                                {% widthratio cat.total_revenue total_ventas 100 %}%
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <div class="stat-value">{{ total_orders }}</div>
-        <div class="stat-label">Órdenes</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon products">
-            <i class="fas fa-box"></i>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>No hay datos de categorías en el período seleccionado</p>
         </div>
-        <div class="stat-value">{{ total_products_sold }}</div>
-        <div class="stat-label">Productos Vendidos</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon avg">
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="stat-value">${{ average_sale|floatformat:2 }}</div>
-        <div class="stat-label">Ticket Promedio</div>
-    </div>
+    {% endif %}
 </div>
 
-<div class="row">
-    <!-- Órdenes del Período -->
-    <div class="col-lg-7">
-        <div class="report-section">
-            <div class="section-title">
-                <i class="fas fa-clipboard-list"></i> Órdenes del Período
-            </div>
-
-            {% if orders %}
-                <div style="overflow-x: auto;">
-                    <table class="orders-table">
-                        <thead>
-                            <tr>
-                                <th>Orden</th>
-                                <th>Fecha</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for order in orders %}
-                            <tr>
-                                <td>
-                                    <strong>{{ order.order_number }}</strong>
-                                </td>
-                                <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    <strong style="color: var(--primary-color);">
-                                        ${{ order.total }} MXN
-                                    </strong>
-                                </td>
-                                <td>
-                                    {% if order.status == 'completed' %}
-                                        <span class="status-badge status-completed">
-                                            <i class="fas fa-check"></i> Completada
-                                        </span>
-                                    {% else %}
-                                        <span class="status-badge status-pending">
-                                            <i class="fas fa-clock"></i> Pendiente
-                                        </span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h4>No hay órdenes en este período</h4>
-                    <p class="text-muted">Selecciona un rango de fechas diferente</p>
-                </div>
-            {% endif %}
-        </div>
+<!-- Listado de Órdenes -->
+<div class="table-card">
+    <div class="table-title">
+        <i class="fas fa-list"></i> Detalle de Órdenes
     </div>
 
-    <!-- Productos Más Vendidos -->
-    <div class="col-lg-5">
-        <div class="report-section">
-            <div class="section-title">
-                <i class="fas fa-fire"></i> Productos Más Vendidos
-            </div>
-
-            {% if top_products %}
-                {% for item in top_products %}
-                    <div class="product-item">
-                        <span class="product-name">{{ item.product__name }}</span>
-                        <span class="product-quantity">{{ item.total_qty }} vendidos</span>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-box-open"></i>
-                    <p class="text-muted">No hay productos vendidos</p>
-                </div>
-            {% endif %}
+    {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Número de Orden</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'admin_order_detail' order.id %}" style="font-weight: bold;">
+                                    {{ order.order_number }}
+                                </a>
+                            </td>
+                            <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>{{ order.customer.username|default:"Cliente Anónimo" }}</td>
+                            <td class="text-end" style="font-weight: bold; color: var(--primary-color);">
+                                ${{ order.total }}
+                            </td>
+                            <td class="text-center">
+                                {% if order.status == 'completed' %}
+                                    <span class="badge bg-success">Completada</span>
+                                {% elif order.status == 'pending' %}
+                                    <span class="badge bg-warning">Pendiente</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-
-        <!-- Ventas por Categoría -->
-        <div class="report-section">
-            <div class="section-title">
-                <i class="fas fa-tags"></i> Ventas por Categoría
-            </div>
-
-            {% if sales_by_category %}
-                {% for item in sales_by_category %}
-                    <div class="product-item">
-                        <span class="product-name">{{ item.product__category__name }}</span>
-                        <span class="product-quantity">${{ item.total_sales|floatformat:2 }}</span>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-tag"></i>
-                    <p class="text-muted">No hay datos de categorías</p>
-                </div>
-            {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <p>No hay órdenes en el período seleccionado</p>
         </div>
-    </div>
+    {% endif %}
+</div>
+
+<!-- Botón de Exportar (opcional) -->
+<div class="text-center mb-4">
+    <button class="btn btn-outline-primary btn-lg" onclick="window.print()">
+        <i class="fas fa-print"></i> Imprimir Reporte
+    </button>
 </div>
 
 {% endblock %}

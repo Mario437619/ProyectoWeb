@@ -193,7 +193,27 @@
         margin-top: 1rem;
     }
 
-    .btn-buy {
+    .btn-view {
+        flex: 1;
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        padding: 0.6rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+
+    .btn-view:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-add-sale {
         flex: 1;
         background: var(--primary-color);
         color: white;
@@ -207,26 +227,16 @@
         text-align: center;
     }
 
-    .btn-buy:hover {
+    .btn-add-sale:hover {
         background: var(--secondary-color);
         transform: translateY(-2px);
         color: white;
     }
 
-    .btn-details {
-        background: white;
-        color: var(--primary-color);
-        border: 2px solid var(--primary-color);
-        padding: 0.6rem 1.2rem;
-        border-radius: 10px;
-        font-weight: 600;
-        transition: all 0.3s;
-        text-decoration: none;
-    }
-
-    .btn-details:hover {
-        background: var(--primary-color);
-        color: white;
+    .btn-add-sale:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
     }
 </style>
 
@@ -235,8 +245,8 @@
         <div class="row align-items-center">
             <div class="col-lg-6 hero-content">
                 <h1 class="hero-title">
-    <i class="fas fa-coffee"></i> Bienvenido a CafeITO
-</h1>
+                    <i class="fas fa-coffee"></i> Bienvenido a CafeITO
+                </h1>
                 <p class="hero-subtitle">
                     Descubre los mejores cafés y productos de panadería artesanales
                 </p>
@@ -270,14 +280,14 @@
                     <div class="category-icon">
                         {% if 'pan' in c.name|lower or 'bread' in c.name|lower %}
                             <i class="fas fa-bread-slice"></i>
-                        {% elif 'cafe' in c.name|lower or 'coffee' in c.name|lower %}
-                            <i class="fas fa-mug-hot"></i>
+                        {% elif 'cafe' in c.name|lower or 'café' in c.name|lower or 'coffee' in c.name|lower %}
+                            <i class="fas fa-coffee"></i>
                         {% elif 'pastel' in c.name|lower or 'cake' in c.name|lower %}
                             <i class="fas fa-birthday-cake"></i>
                         {% elif 'galleta' in c.name|lower or 'cookie' in c.name|lower %}
-                            <i class="fas fa-cookie"></i>
+                            <i class="fas fa-coffee"></i>
                         {% else %}
-                            <i class="fas fa-cookie-bite"></i>
+                            <i class="fas fa-box"></i>
                         {% endif %}
                     </div>
                     <div class="category-name">{{ c.name }}</div>
@@ -332,10 +342,19 @@
                         </div>
 
                         <div class="product-actions">
-    <a href="{% url 'product_detail' p.id %}" class="btn-buy" style="flex: 1;">
-        <i class="fas fa-eye"></i> Ver Detalles
-    </a>
-</div>
+                            <a href="{% url 'product_detail' p.id %}" class="btn-view">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            {% if p.stock > 0 and user.is_authenticated %}
+                                <a href="{% url 'add_to_sale' p.id %}" class="btn-add-sale">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </a>
+                            {% else %}
+                                <button class="btn-add-sale" disabled>
+                                    <i class="fas fa-times"></i> Agotado
+                                </button>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

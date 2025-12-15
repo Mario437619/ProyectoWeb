@@ -1,0 +1,141 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<style>
+    .users-header {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .users-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .role-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .role-admin {
+        background: #dc3545;
+        color: white;
+    }
+
+    .role-vendedor {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-create-user {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-create-user:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        color: white;
+    }
+</style>
+
+<div class="users-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 style="font-weight: bold; margin-bottom: 0.5rem;">
+                <i class="fas fa-users"></i> Gestión de Usuarios
+            </h1>
+            <p class="mb-0 opacity-75">Administra los usuarios del sistema</p>
+        </div>
+        <a href="{% url 'admin_user_create' %}" class="btn-create-user">
+            <i class="fas fa-user-plus"></i> Nuevo Usuario
+        </a>
+    </div>
+</div>
+
+<div class="users-table">
+    <table class="table table-hover mb-0">
+        <thead style="background: var(--primary-color); color: white;">
+            <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Fecha Registro</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+                <tr>
+                    <td><strong>{{ u.id }}</strong></td>
+                    <td>
+                        <i class="fas fa-user-circle"></i> {{ u.username }}
+                    </td>
+                    <td>{{ u.email|default:"Sin email" }}</td>
+                    <td>
+                        {% if u.is_staff or u.groups.all.0.name == 'Administrador' %}
+                            <span class="role-badge role-admin">
+                                <i class="fas fa-crown"></i> Administrador
+                            </span>
+                        {% elif u.groups.all.0.name == 'Vendedor' %}
+                            <span class="role-badge role-vendedor">
+                                <i class="fas fa-cash-register"></i> Vendedor
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">Sin rol</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge bg-success">Activo</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'admin_user_edit' u.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        {% if u.id != request.user.id %}
+                            <a href="{% url 'admin_user_delete' u.id %}" 
+                               class="btn btn-sm btn-danger" 
+                               onclick="return confirm('¿Eliminar usuario {{ u.username }}?')">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="fas fa-users-slash" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="text-muted mt-3">No hay usuarios registrados</p>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

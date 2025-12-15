@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.utils import timezone
 from django.contrib import messages
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Avg, Count
 from django.http import JsonResponse
 import time
 import random
@@ -16,7 +16,16 @@ from .forms import RegisterForm, ProductForm
 # FUNCIONES DE UTILIDAD
 # ======================================== 
 def is_admin(user):
-    return user.is_staff
+    """Verifica si el usuario es administrador"""
+    return user.is_staff or user.groups.filter(name='Administrador').exists()
+
+def is_vendedor(user):
+    """Verifica si el usuario es vendedor"""
+    return user.groups.filter(name='Vendedor').exists()
+
+def is_vendedor_or_admin(user):
+    """Verifica si el usuario es vendedor o admin"""
+    return is_admin(user) or is_vendedor(user)
 
 # ======================================== 
 # VISTAS PÚBLICAS
@@ -31,10 +40,15 @@ def home(request):
 
 def products_by_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
-    products = Product.objects.filter(category=category, is_active=True)
-    return render(request, 'store/category_products.html', {
+    products = Product.objects.filter(category=category, is_active=True).order_by('tipo', 'name')
+    
+    # Obtener todas las categorías para la navegación rápida
+    all_categories = Category.objects.filter(is_active=True).order_by('name')
+    
+    return render(request, 'store/products.html', {
         'category': category,
-        'products': products
+        'products': products,
+        'all_categories': all_categories  # <- AGREGAR ESTA LÍNEA
     })
 
 def product_detail(request, product_id):
@@ -100,7 +114,7 @@ def save_sale_session(request, sale_items):
     request.session['sale_items'] = sale_items
     request.session.modified = True
 
-@login_required
+@user_passes_test(is_vendedor_or_admin)
 def add_to_sale(request, product_id):
     """Agregar producto a la venta en sesión"""
     product = get_object_or_404(Product, id=product_id)
@@ -487,19 +501,197 @@ def admin_order_detail(request, order_id):
         'items': items
     })
 
-# ======================================== 
-# REPORTES
-# ======================================== 
+
 @user_passes_test(is_admin)
 def reports(request):
+    """Reportes de ventas con filtros de fecha"""
+    from datetime import datetime, timedelta
+    
+    # Obtener fechas del filtro
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    
+    # Fechas por defecto (últimos 7 días)
     today = timezone.now().date()
-    orders_today = Order.objects.filter(created_at__date=today)
-    total_today = orders_today.aggregate(Sum('total'))['total__sum'] or 0
-    sold = OrderItem.objects.values('product__name').annotate(
-        total_qty=Sum('quantity')
+    
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+        except ValueError:
+            fecha_inicio = today - timedelta(days=7)
+    else:
+        fecha_inicio = today - timedelta(days=7)
+    
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            fecha_fin = today
+    else:
+        fecha_fin = today
+    
+    # Permitir que fecha_inicio sea mayor que fecha_fin (intercambiarlas si es necesario)
+    if fecha_fin < fecha_inicio:
+        fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
+    
+    # Crear datetime para el inicio del día y fin del día
+    fecha_inicio_dt = timezone.make_aware(datetime.combine(fecha_inicio, datetime.min.time()))
+    fecha_fin_dt = timezone.make_aware(datetime.combine(fecha_fin, datetime.max.time()))
+    
+    # Filtrar órdenes por rango de fechas
+    orders = Order.objects.filter(
+        created_at__gte=fecha_inicio_dt,
+        created_at__lte=fecha_fin_dt
+    ).order_by('-created_at')
+    
+    # Calcular total
+    total_ventas = orders.aggregate(Sum('total'))['total__sum'] or 0
+    
+    # Productos más vendidos en el rango
+    productos_vendidos = OrderItem.objects.filter(
+        order__created_at__gte=fecha_inicio_dt,
+        order__created_at__lte=fecha_fin_dt
+    ).values(
+        'product__name', 
+        'product__category__name'
+    ).annotate(
+        total_qty=Sum('quantity'),
+        total_revenue=Sum('subtotal')
     ).order_by('-total_qty')[:10]
-    return render(request, 'store/reports.html', {
-        'orders_today': orders_today,
-        'total_today': total_today,
-        'sold': sold
+    
+    # Ventas por categoría
+    ventas_por_categoria = OrderItem.objects.filter(
+        order__created_at__gte=fecha_inicio_dt,
+        order__created_at__lte=fecha_fin_dt
+    ).values(
+        'product__category__name'
+    ).annotate(
+        total_revenue=Sum('subtotal'),
+        total_qty=Sum('quantity')
+    ).order_by('-total_revenue')
+    
+    # Estadísticas adicionales
+    total_ordenes = orders.count()
+    ticket_promedio = total_ventas / total_ordenes if total_ordenes > 0 else 0
+    
+    # Calcular días del período
+    dias_periodo = (fecha_fin - fecha_inicio).days + 1
+    
+    context = {
+        'orders': orders,
+        'total_ventas': total_ventas,
+        'total_ordenes': total_ordenes,
+        'ticket_promedio': ticket_promedio,
+        'productos_vendidos': productos_vendidos,
+        'ventas_por_categoria': ventas_por_categoria,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'dias_periodo': dias_periodo,
+    }
+    
+    return render(request, 'store/reports.html', context)
+
+from django.contrib.auth.models import User, Group
+
+@user_passes_test(is_admin)
+def admin_users(request):
+    """Vista para gestionar usuarios"""
+    users = User.objects.all().order_by('-date_joined')
+    grupos = Group.objects.all()
+    
+    return render(request, 'store/admin_users.html', {
+        'users': users,
+        'grupos': grupos
     })
+
+@user_passes_test(is_admin)
+def admin_user_create(request):
+    """Crear nuevo usuario"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        email = request.POST.get('email')
+        rol = request.POST.get('rol')
+        
+        # Validar que no exista el usuario
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'El nombre de usuario ya existe')
+            return redirect('admin_user_create')
+        
+        # Crear usuario
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password
+        )
+        
+        # Asignar rol
+        if rol == 'admin':
+            user.is_staff = True
+            user.save()
+            admin_group = Group.objects.get(name='Administrador')
+            user.groups.add(admin_group)
+        elif rol == 'vendedor':
+            vendedor_group = Group.objects.get(name='Vendedor')
+            user.groups.add(vendedor_group)
+        
+        messages.success(request, f'Usuario {username} creado exitosamente')
+        return redirect('admin_users')
+    
+    return render(request, 'store/admin_user_form.html')
+
+@user_passes_test(is_admin)
+def admin_user_edit(request, user_id):
+    """Editar usuario existente"""
+    usuario = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        usuario.username = request.POST.get('username')
+        usuario.email = request.POST.get('email')
+        
+        # Cambiar contraseña si se proporciona
+        new_password = request.POST.get('password')
+        if new_password:
+            usuario.set_password(new_password)
+        
+        # Cambiar rol
+        rol = request.POST.get('rol')
+        usuario.groups.clear()
+        
+        if rol == 'admin':
+            usuario.is_staff = True
+            admin_group = Group.objects.get(name='Administrador')
+            usuario.groups.add(admin_group)
+        elif rol == 'vendedor':
+            usuario.is_staff = False
+            vendedor_group = Group.objects.get(name='Vendedor')
+            usuario.groups.add(vendedor_group)
+        
+        usuario.save()
+        messages.success(request, f'Usuario {usuario.username} actualizado')
+        return redirect('admin_users')
+    
+    # Determinar rol actual
+    rol_actual = 'vendedor'
+    if usuario.is_staff or usuario.groups.filter(name='Administrador').exists():
+        rol_actual = 'admin'
+    
+    return render(request, 'store/admin_user_form.html', {
+        'usuario': usuario,
+        'rol_actual': rol_actual
+    })
+
+@user_passes_test(is_admin)
+def admin_user_delete(request, user_id):
+    """Eliminar usuario"""
+    usuario = get_object_or_404(User, id=user_id)
+    
+    # No permitir que se elimine a sí mismo
+    if usuario.id == request.user.id:
+        messages.error(request, 'No puedes eliminarte a ti mismo')
+        return redirect('admin_users')
+    
+    username = usuario.username
+    usuario.delete()
+    messages.success(request, f'Usuario {username} eliminado')
+    return redirect('admin_users')
