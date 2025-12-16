@@ -1,14 +1,16 @@
-# views.py - CÓDIGO COMPLETO PARA CAFEITO
+# views.py - CÓDIGO COMPLETO CORREGIDO PARA CAFEITO
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User, Group
 from django.utils import timezone
 from django.contrib import messages
 from django.db.models import Q, Sum, Avg, Count
 from django.http import JsonResponse
 import time
 import random
+from datetime import datetime, timedelta
 from .models import Category, Product, Order, OrderItem, InventoryLog
 from .forms import RegisterForm, ProductForm
 
@@ -48,7 +50,7 @@ def products_by_category(request, category_id):
     return render(request, 'store/products.html', {
         'category': category,
         'products': products,
-        'all_categories': all_categories  # <- AGREGAR ESTA LÍNEA
+        'all_categories': all_categories
     })
 
 def product_detail(request, product_id):
@@ -214,9 +216,7 @@ def multi_sale(request):
             status='completed',
             payment_method='cash',
             payment_status='completed',
-            notes=f'Pago: ${payment_received:.2f} | Cambio: ${change:.2f}',
-            created_at=now,
-            updated_at=now
+            notes=f'Pago: ${payment_received:.2f} | Cambio: ${change:.2f}'
         )
         
         # Crear items y actualizar stock
@@ -226,8 +226,7 @@ def multi_sale(request):
                 product=item['product'],
                 quantity=item['quantity'],
                 unit_price=item['product'].price,
-                subtotal=item['subtotal'],
-                created_at=now
+                subtotal=item['subtotal']
             )
             
             # Actualizar stock
@@ -238,8 +237,7 @@ def multi_sale(request):
             InventoryLog.objects.create(
                 product=item['product'],
                 quantity_change=-item['quantity'],
-                reason='Venta en punto de venta',
-                created_at=now
+                reason='Venta en punto de venta'
             )
         
         # Limpiar sesión
@@ -265,7 +263,7 @@ def multi_sale(request):
                 'name': product.name,
                 'price': product.price,
                 'stock': product.stock,
-                'image_url': product.image.url if product.image else '',
+                'image': product.image.url if product.image else None,  # CORREGIDO
                 'quantity': sale_items.get(str(product.id), 0)
             }
             products_list.append(product_dict)
@@ -388,13 +386,9 @@ def admin_products(request):
 @user_passes_test(is_admin)
 def admin_product_create(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
-            p = form.save(commit=False)
-            now = timezone.now()
-            p.created_at = now
-            p.updated_at = now
-            p.save()
+            form.save()
             messages.success(request, 'Producto creado')
             return redirect('admin_products')
     else:
@@ -405,11 +399,9 @@ def admin_product_create(request):
 def admin_product_edit(request, product_id):
     p = get_object_or_404(Product, id=product_id)
     if request.method == 'POST':
-        form = ProductForm(request.POST, instance=p)
+        form = ProductForm(request.POST, request.FILES, instance=p)
         if form.is_valid():
-            p = form.save(commit=False)
-            p.updated_at = timezone.now()
-            p.save()
+            form.save()
             messages.success(request, 'Producto actualizado')
             return redirect('admin_products')
     else:
@@ -438,18 +430,23 @@ def admin_category_create(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description')
-        image_url = request.POST.get('image_url')
-        now = timezone.now()
-        Category.objects.create(
+        image = request.FILES.get('image')  # CORREGIDO: obtener archivo de imagen
+        is_active = request.POST.get('is_active') == 'on'  # Checkbox
+        
+        category = Category.objects.create(
             name=name,
             description=description,
-            image_url=image_url,
-            is_active=True,
-            created_at=now,
-            updated_at=now
+            is_active=is_active
         )
+        
+        # Guardar imagen si se proporcionó
+        if image:
+            category.image = image
+            category.save()
+        
         messages.success(request, 'Categoría creada exitosamente')
         return redirect('admin_categories')
+    
     return render(request, 'store/admin_category_form.html')
 
 @user_passes_test(is_admin)
@@ -458,11 +455,18 @@ def admin_category_edit(request, category_id):
     if request.method == 'POST':
         category.name = request.POST.get('name')
         category.description = request.POST.get('description')
-        category.image_url = request.POST.get('image_url')
-        category.updated_at = timezone.now()
+        
+        # Actualizar imagen solo si se proporciona una nueva
+        image = request.FILES.get('image')
+        if image:
+            category.image = image
+        
+        category.is_active = request.POST.get('is_active') == 'on'
         category.save()
+        
         messages.success(request, 'Categoría actualizada')
         return redirect('admin_categories')
+    
     return render(request, 'store/admin_category_form.html', {
         'category': category
     })
@@ -501,11 +505,12 @@ def admin_order_detail(request, order_id):
         'items': items
     })
 
-
+# ======================================== 
+# REPORTES
+# ======================================== 
 @user_passes_test(is_admin)
 def reports(request):
     """Reportes de ventas con filtros de fecha"""
-    from datetime import datetime, timedelta
     
     # Obtener fechas del filtro
     fecha_inicio_str = request.GET.get('fecha_inicio')
@@ -591,8 +596,9 @@ def reports(request):
     
     return render(request, 'store/reports.html', context)
 
-from django.contrib.auth.models import User, Group
-
+# ======================================== 
+# PANEL DE ADMINISTRACIÓN - USUARIOS
+# ======================================== 
 @user_passes_test(is_admin)
 def admin_users(request):
     """Vista para gestionar usuarios"""
@@ -629,10 +635,10 @@ def admin_user_create(request):
         if rol == 'admin':
             user.is_staff = True
             user.save()
-            admin_group = Group.objects.get(name='Administrador')
+            admin_group, created = Group.objects.get_or_create(name='Administrador')
             user.groups.add(admin_group)
         elif rol == 'vendedor':
-            vendedor_group = Group.objects.get(name='Vendedor')
+            vendedor_group, created = Group.objects.get_or_create(name='Vendedor')
             user.groups.add(vendedor_group)
         
         messages.success(request, f'Usuario {username} creado exitosamente')
@@ -660,11 +666,11 @@ def admin_user_edit(request, user_id):
         
         if rol == 'admin':
             usuario.is_staff = True
-            admin_group = Group.objects.get(name='Administrador')
+            admin_group, created = Group.objects.get_or_create(name='Administrador')
             usuario.groups.add(admin_group)
         elif rol == 'vendedor':
             usuario.is_staff = False
-            vendedor_group = Group.objects.get(name='Vendedor')
+            vendedor_group, created = Group.objects.get_or_create(name='Vendedor')
             usuario.groups.add(vendedor_group)
         
         usuario.save()

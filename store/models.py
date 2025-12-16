@@ -4,11 +4,11 @@ from django.contrib.auth.models import User
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    # CAMBIADO: Ahora usa ImageField en lugar de CharField para URL
     image = models.ImageField(upload_to='categories/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
+    # CORREGIDO: Ahora Django asigna automáticamente las fechas
+    created_at = models.DateTimeField(auto_now_add=True)  # Se asigna al crear
+    updated_at = models.DateTimeField(auto_now=True)      # Se actualiza al guardar
     
     class Meta:
         db_table = 'categories'
@@ -23,12 +23,12 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     tipo = models.CharField(max_length=50, null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    # CAMBIADO: Ahora usa ImageField en lugar de CharField para URL
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     stock = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
+    # CORREGIDO: Ahora Django asigna automáticamente las fechas
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'products'
@@ -49,8 +49,9 @@ class Order(models.Model):
     payment_received = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     change_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
+    # CORREGIDO: Ahora Django asigna automáticamente las fechas
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'orders'
@@ -64,7 +65,8 @@ class OrderItem(models.Model):
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField()
+    # CORREGIDO: Ahora Django asigna automáticamente la fecha
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         db_table = 'order_items'
@@ -73,7 +75,8 @@ class InventoryLog(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity_change = models.IntegerField()
     reason = models.CharField(max_length=100, null=True, blank=True)
-    created_at = models.DateTimeField()
+    # CORREGIDO: Ahora Django asigna automáticamente la fecha
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         db_table = 'inventory_logs'
