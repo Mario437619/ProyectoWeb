@@ -1,0 +1,86 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2><i class="fas fa-file-invoice"></i> Detalle de Orden</h2>
+            
+            <div class="card mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Orden #{{ order.order_number }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Fecha:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+                            <p><strong>Cliente:</strong> {{ order.customer.username }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Estado:</strong> 
+                                {% if order.status == 'completed' %}
+                                    <span class="badge bg-success">Completada</span>
+                                {% elif order.status == 'pending' %}
+                                    <span class="badge bg-warning">Pendiente</span>
+                                {% elif order.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Cancelada</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.status }}</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Método de Pago:</strong> {{ order.payment_method }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if order.notes %}
+                    <div class="alert alert-info">
+                        <strong>Notas:</strong> {{ order.notes }}
+                    </div>
+                    {% endif %}
+                    
+                    <h4 class="mt-4">Productos</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio Unitario</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td class="text-center">{{ item.quantity }}</td>
+                                    <td class="text-end">${{ item.unit_price }}</td>
+                                    <td class="text-end">${{ item.subtotal }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                                    <td class="text-end"><strong>${{ order.total }} MXN</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'user_orders' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver a Mis Órdenes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+```
+
+**Guarda este contenido en:**
+```
+store/templates/store/order_detail.html
